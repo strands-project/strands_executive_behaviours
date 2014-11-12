@@ -7,7 +7,7 @@ from strands_executive_msgs.msg import Task, ExecutionStatus
 from strands_executive_msgs.srv import AddTasks, SetExecutionStatus, DemandTask
 from std_srvs.srv import Empty
 from mongodb_store.message_store import MessageStoreProxy
-from strands_navigation_msgs.msg import TopologicalNode
+
 from scitos_msgs.msg import BatteryState
 
 from dateutil.tz import *
@@ -15,22 +15,17 @@ from datetime import *
 
 from task_executor import task_routine
 from copy import deepcopy
-from robblog.msg import RobblogEntry
-from robblog import utils as rb_utils
 
 from dynamic_reconfigure.server import Server
-from y1_interfaces.cfg import ChargingThresholdsConfig
+from routine_behaviours.cfg import ChargingThresholdsConfig
 
 
 class RobotRoutine(object):
 
-    """Wraps up all the routine stuff with charing etc."""
-    def __init__(self, daily_start, daily_end):
+    """Wraps up all the routine stuff with charging etc."""
+    def __init__(self, daily_start, daily_end, idle_duration):
 
         assert daily_start < daily_end
-
-
-        self.blog_msg_store = MessageStoreProxy(collection='robblog')
 
         self.daily_start = daily_start
         self.daily_end = daily_end
@@ -74,20 +69,25 @@ class RobotRoutine(object):
 
         # how big a gap in the scheduler should trigger a return to charger 
         self.charge_window = rospy.Duration(60 * 10)
+
         # and how long to charge for once there, it won't automatically leave if there's nothing to do
         self.idle_charge_duration = rospy.Duration(60)
 
         self.idle_count = 0
 
-        # how many 5 second idle counts to wait for
-        self.idle_thres = 15 * 1
-        self.sent_to_charge = False
+        # how many 5 second idle counts to wait for before deciding we're idle
+        # a count of 12 is one minute
+        
 
+
+        self.idle_thres = int(idle_duration.to_sec() / 5)
+
+        self.sent_to_charge = False
 
          # Set the task executor running in case it's not
         self.set_execution_status(True)
 
-        rospy.Subscriber('/current_schedule', ExecutionStatus, self._check_idle)
+        rospy.Subscriber('current_schedule', ExecutionStatus, self._check_idle)
 
     def dynamic_reconfigure_cb(self, config, level):
         rospy.loginfo("Config set to {force_charge_threshold}, {force_charge_addition}".format(**config))
@@ -142,13 +142,11 @@ class RobotRoutine(object):
         else:
             self.idle_count = 0
 
-        rospy.logdebug('idle count: %s' % self.idle_count)
+        rospy.loginfo('idle count: %s' % self.idle_count)
+        rospy.loginfo('idle threshold: %s' % self.idle_thres)
 
         if self.idle_count > self.idle_thres:
-            rospy.loginfo('Idle for too long, going to charging point')
-            # cha
-            self.demand_charge(self.idle_charge_duration)
-
+            self.on_idle()
 
 
     def battery_ok(self):
@@ -230,13 +228,13 @@ class RobotRoutine(object):
         self.maps_msg_store = MessageStoreProxy(collection='topological_maps')
 
 
-
-    def load_nodes(self):
-        msg_store = MessageStoreProxy(collection='topological_maps')
-        query_meta = {}
-        query_meta["pointset"] = rospy.get_param('topological_map_name')
-        nodes = self.maps_msg_store.query(TopologicalNode._type, {}, query_meta)
-        return [n for [n, meta] in nodes]
+    # deprecated
+    # def load_nodes(self):
+    #     msg_store = MessageStoreProxy(collection='topological_maps')
+    #     query_meta = {}
+    #     query_meta["pointset"] = rospy.get_param('topological_map_name')
+    #     nodes = self.maps_msg_store.query(TopologicalNode._type, {}, query_meta)
+    #     return [n for [n, meta] in nodes]
 
     def demand_charge(self, charge_duration):
         charging_point = 'ChargingPoint'
@@ -259,20 +257,22 @@ class RobotRoutine(object):
         # end of day, charge for 10 mins; will charge all night as no moves allowed.
         self.clear_then_charge( rospy.Duration(10 * 60.0) ) 
 
-        self.generate_post('End of the day', 'I\'m calling it a day until %s' % datetime.fromtimestamp((rospy.get_rostime() + self.night_duration).to_sec()))
         rospy.loginfo('ok, I\'m calling it a day until %s' % datetime.fromtimestamp((rospy.get_rostime() + self.night_duration).to_sec()))
-
 
        
     def on_day_start(self):        
-        self.generate_post('Start of the day', 'Good morning world!')
         rospy.loginfo('Good morning')
         self.sent_night_tasks = False
 
     def start_routine(self):
         self.runner.add_tasks(self.routine.get_routine_tasks())
 
+    def on_idle(self):
+        """
+            Called when the routine is idle. Default is to trigger travel to the charging. As idleness is determined by the current schedule, if this call doesn't utlimately cause a task schedule to be generated this will be called repeatedly.
+        """
+        rospy.loginfo('Idle for too long, going to charging point')
+        # go for a quick charge
+        self.demand_charge(self.idle_charge_duration)
 
-    def generate_post(self, title, body):
-        e = rb_utils.create_timed_entry(title=title, body=body)
-        self.blog_msg_store.insert(e)
+
