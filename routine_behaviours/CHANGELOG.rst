@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.4 (2014-11-12)
+------------------
 * Fixed file permissions.
 * Contributors: Nick Hawes
 
