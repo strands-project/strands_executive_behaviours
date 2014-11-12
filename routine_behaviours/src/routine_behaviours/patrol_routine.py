@@ -20,8 +20,6 @@ def create_patrol_task(waypoint_name):
     return Task(start_node_id=waypoint_name, max_duration=rospy.Duration(30))
 
 
-
-
 class PatrolRoutine(RobotRoutine):
     """Wraps up all the routine stuff"""
     def __init__(self, daily_start, daily_end, tour_duration_estimate=None):
@@ -86,18 +84,3 @@ class PatrolRoutine(RobotRoutine):
         self.add_tasks([create_patrol_task(random.choice(self.node_names))])
     
 
-if __name__ == '__main__':
-    rospy.init_node("patrol_routine")
-
-    # start and end times -- all times should be in local timezone
-    localtz = tzlocal()
-    start = time(8,45, tzinfo=localtz)
-    end = time(23,45, tzinfo=localtz)
-
-    # create the routine object
-    routine = PatrolRoutine(start, end)    
-    
-    # set tasks and start execution
-    routine.create_routine()
-
-    rospy.spin()
