@@ -2,6 +2,11 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Corrected rosdep.
+* Contributors: Nick Hawes
+
 0.0.1 (2014-11-12)
 ------------------
 
