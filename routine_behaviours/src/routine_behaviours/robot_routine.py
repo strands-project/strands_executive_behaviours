@@ -25,8 +25,6 @@ class RobotRoutine(object):
     """Wraps up all the routine stuff with charging etc."""
     def __init__(self, daily_start, daily_end, idle_duration):
 
-        assert daily_start < daily_end
-
         self.daily_start = daily_start
         self.daily_end = daily_end
         self._create_services()
