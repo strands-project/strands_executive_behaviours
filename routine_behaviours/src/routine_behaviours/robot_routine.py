@@ -142,8 +142,8 @@ class RobotRoutine(object):
         else:
             self.idle_count = 0
 
-        rospy.loginfo('idle count: %s' % self.idle_count)
-        rospy.loginfo('idle threshold: %s' % self.idle_thres)
+        # rospy.loginfo('idle count: %s' % self.idle_count)
+        # rospy.loginfo('idle threshold: %s' % self.idle_thres)
 
         if self.idle_count > self.idle_thres:
             self.on_idle()
