@@ -2,6 +2,13 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Corrected day start and end
+* Updated routinge to use new routine constraints.
+* Cleaning up output and changing defaults for testing,
+* Contributors: Nick Hawes
+
 0.0.4 (2014-11-12)
 ------------------
 * Fixed file permissions.
