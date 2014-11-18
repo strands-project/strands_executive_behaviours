@@ -13,11 +13,17 @@ if __name__ == '__main__':
 
     # start and end times -- all times should be in local timezone
     localtz = tzlocal()
-    start = time(8,45, tzinfo=localtz)
-    end = time(23,45, tzinfo=localtz)
+    start = time(8,30, tzinfo=localtz)
+    end = time(0,37, tzinfo=localtz)
 
-    # create the routine object
-    routine = PatrolRoutine(start, end)    
+    # how long to stand idle before doing something
+    idle_duration=rospy.Duration(20)
+
+    # how long you think it will take to do a complete tour. overestimate is better than under
+    tour_duration_estimate = rospy.Duration(60 * 40 * 2)
+
+    routine = PatrolRoutine(daily_start=start, daily_end=end, 
+        idle_duration=idle_duration, tour_duration_estimate=tour_duration_estimate)    
     
     # set tasks and start execution
     routine.create_routine()
