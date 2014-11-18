@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.5 (2014-11-18)
+------------------
 * Corrected day start and end
 * Updated routinge to use new routine constraints.
 * Cleaning up output and changing defaults for testing,
