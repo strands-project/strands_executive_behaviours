@@ -105,11 +105,16 @@ class RobotRoutine(object):
         self.night_tasks.append(task)
 
     def is_before_day_start(self,time):
-        return task_routine.time_less_than(time, self.daily_start)
+        if task_routine.time_less_than(self.daily_start,self.daily_end):  
+            return task_routine.time_less_than(time, self.daily_start)
+        else:
+            return task_routine.time_less_than(time, self.daily_start) and task_routine.time_less_than(self.daily_end, time)
 
     def is_after_day_end(self,time):
-        return task_routine.time_less_than(self.daily_end, time)
-
+        if task_routine.time_less_than(self.daily_start,self.daily_end):  
+            return task_routine.time_less_than(self.daily_end, time)
+        else:
+            return task_routine.time_less_than(self.daily_end, time) and task_routine.time_less_than(time, self.daily_start)
 
     def is_during_day(self,time):
         return not (self.is_before_day_start(time) or self.is_after_day_end(time))
@@ -170,6 +175,7 @@ class RobotRoutine(object):
     def _check_battery(self, battery_state):
         self.battery_state = battery_state
 
+
         if not self.battery_ok():
             
             # if not ok and not triggered yet
@@ -189,6 +195,9 @@ class RobotRoutine(object):
         # check for charging so we can send off night tasks
         rostime_now = rospy.get_rostime()
         now = datetime.fromtimestamp(rostime_now.to_sec(), tzlocal()).time()
+
+
+
 
         if len(self.night_tasks) > 0 and not self.sent_night_tasks and self.battery_state is not None and self.battery_state.charging and not self.is_during_day(now):
             rospy.loginfo('Sending night tasks')
