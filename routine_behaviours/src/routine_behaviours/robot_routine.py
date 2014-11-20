@@ -196,9 +196,6 @@ class RobotRoutine(object):
         rostime_now = rospy.get_rostime()
         now = datetime.fromtimestamp(rostime_now.to_sec(), tzlocal()).time()
 
-
-
-
         if len(self.night_tasks) > 0 and not self.sent_night_tasks and self.battery_state is not None and self.battery_state.charging and not self.is_during_day(now):
             rospy.loginfo('Sending night tasks')
             self.send_night_tasks()

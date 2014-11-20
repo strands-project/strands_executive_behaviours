@@ -68,10 +68,6 @@ class PatrolRoutine(RobotRoutine):
         # self.runner.add_day_off('Sunday')        
         # self.runner.add_date_off(date(2014, 05, 26))
 
-        # NIGHT TASKS
-        # this is how you add something for when the robot is charging, but these tasks aren't allowed a location
-        # clear_datacentre_task = create_datacentre_task(['heads','metric_map_data','rosout_agg','robot_pose','task_events','scheduling_problems','ws_observations','monitored_nav_events'])
-        # self.add_night_task(clear_datacentre_task)
 
 
     def on_idle(self):
