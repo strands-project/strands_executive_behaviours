@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.6 (2014-11-21)
+------------------
 * Expanded marathon routine.
 * Added reasonably generic way of creating task routines.
 * Contributors: Nick Hawes
