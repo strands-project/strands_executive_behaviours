@@ -16,12 +16,12 @@ import random
 
 def create_3d_scan_task(waypoint_name):
     task = Task(start_node_id=waypoint_name, end_node_id=waypoint_name, action='ptu_pan_tilt_metric_map', max_duration=rospy.Duration(240))
-    task_utils.add_int_argument(task, '-150')
-    task_utils.add_int_argument(task, '60')
-    task_utils.add_int_argument(task, '160')
-    task_utils.add_int_argument(task, '-30')
+    task_utils.add_int_argument(task, '-160')
     task_utils.add_int_argument(task, '20')
-    task_utils.add_int_argument(task, '30')
+    task_utils.add_int_argument(task, '160')
+    task_utils.add_int_argument(task, '-25')
+    task_utils.add_int_argument(task, '25')
+    task_utils.add_int_argument(task, '25')
     return task
 
 def create_tweet_task(waypoint_name, tweet, image_topic):
