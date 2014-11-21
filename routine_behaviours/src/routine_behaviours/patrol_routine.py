@@ -32,7 +32,7 @@ class PatrolRoutine(RobotRoutine):
 
     def map_callback(self, msg):        
         print 'got map: %s' % len(msg.nodes)
-        self.node_names = [node.name for node in msg.nodes]
+        self.node_names = [node.name for node in msg.nodes if node.name != 'ChargingPoint']
         
     def get_nodes(self):
         while len(self.node_names) == 0:
@@ -43,15 +43,13 @@ class PatrolRoutine(RobotRoutine):
 
     def create_routine(self):
         
-        # these could be useful
-        node_names_inc_charging = self.get_nodes()         
-        node_names = [n for n in node_names_inc_charging if n != 'ChargingPoint']
+        node_names = self.get_nodes()         
 
         # the tour_duration_estimate tells us how big the time window for a single tour should be
         # if this is underestimated then scheduling will fail
         # if overestimated, this is no big deal but the robot will go idle more
         if not self.tour_duration_estimate:
-            single_node_estimate = 60
+            single_node_estimate = 180
             self.tour_duration_estimate=rospy.Duration(single_node_estimate * len(node_names))
 
 
