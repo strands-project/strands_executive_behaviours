@@ -41,7 +41,7 @@ if __name__ == '__main__':
     routine.create_tweet_routine(twitter_waypoints)
 
     # the list of collections from the message_store db to be replicated
-    message_store_collections = ['heads','metric_map_data','rosout_agg','robot_pose','task_events','scheduling_problems','ws_observations','monitored_nav_events']
+    message_store_collections = ['heads','metric_map_data','rosout_agg','robot_pose','task_events','scheduling_problems','ws_observations','monitored_nav_events','people_perception']
     routine.message_store_entries_to_replicate(message_store_collections)
 
     routine.start_routine()
