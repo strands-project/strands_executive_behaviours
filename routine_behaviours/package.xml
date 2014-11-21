@@ -26,5 +26,6 @@
   <run_depend>strands_navigation_msgs</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>task_executor</run_depend>
+  <run_depend>mongodb_store</run_depend>
 
 </package>

@@ -17,11 +17,12 @@ import random
 
 
 def create_patrol_task(waypoint_name):
-    return Task(start_node_id=waypoint_name, max_duration=rospy.Duration(30))
+    return Task(start_node_id=waypoint_name, end_node_id=waypoint_name, max_duration=rospy.Duration(30))
 
 
 class PatrolRoutine(RobotRoutine):
-    """Wraps up all the routine stuff"""
+    """ Creates a routine which simply visits nodes. """
+
     def __init__(self, daily_start, daily_end, tour_duration_estimate=None, idle_duration=rospy.Duration(5)):
         # super(PatrolRoutine, self).__init__(daily_start, daily_end)        
         RobotRoutine.__init__(self, daily_start, daily_end, idle_duration=idle_duration)
@@ -67,14 +68,7 @@ class PatrolRoutine(RobotRoutine):
         # self.runner.add_day_off('Sunday')        
         # self.runner.add_date_off(date(2014, 05, 26))
 
-        # NIGHT TASKS
-        # this is how you add something for when the robot is charging, but these tasks aren't allowed a location
-        # clear_datacentre_task = create_datacentre_task(['heads','metric_map_data','rosout_agg','robot_pose','task_events','scheduling_problems','ws_observations','monitored_nav_events'])
-        # self.add_night_task(clear_datacentre_task)
 
-
-        # pass the routine tasks on to the runner which handles the daily instantiation of actual tasks
-        self.start_routine()        
 
     def on_idle(self):
         """
