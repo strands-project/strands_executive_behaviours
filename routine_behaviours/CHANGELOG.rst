@@ -2,6 +2,13 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Removed ChargingPoint from randomly visited nodes.
+* Changed ptu sweep parameters
+* Adding people_perception to the replication task
+* Contributors: Christian Dondrup, Nick Hawes, Rares Ambrus
+
 0.0.6 (2014-11-21)
 ------------------
 * Expanded marathon routine.
