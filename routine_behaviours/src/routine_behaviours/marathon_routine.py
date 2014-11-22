@@ -57,25 +57,6 @@ class MarathonRoutine(PatrolRoutine):
         super(MarathonRoutine, self).__init__(daily_start=daily_start, daily_end=daily_end, tour_duration_estimate=tour_duration_estimate, idle_duration=idle_duration)        
 
 
-    def create_task_routine(self, tasks, daily_start=None, daily_end=None, repeat_delta=None):
-        """ 
-            If daily start or end not supplied use routine start or end
-            If delta not supplied, just do once during the start to end window
-        """
-
-        if not daily_start:
-            daily_start = self.daily_start
-
-        if not daily_end:
-            daily_end = self.daily_end
-
-        if not repeat_delta:
-            repeat_delta = delta_between(daily_start, daily_end)
-
-
-        self.routine.repeat_every_delta(tasks, delta=repeat_delta, times=1, start_time=daily_start, duration=delta_between(daily_start, daily_end))
-
-
 
     def create_3d_scan_routine(self, waypoints=None, daily_start=None, daily_end=None, repeat_delta=None):
         """
@@ -99,19 +80,6 @@ class MarathonRoutine(PatrolRoutine):
         # this is how you add something for when the robot is charging, but these tasks aren't allowed a location
         mongodb_task = create_mongodb_store_task(collections, delete_after_move)
         self.add_night_task(mongodb_task)
-
-
-    def create_patrol_routine(self):
-
-        # create the patrolling elements
-        PatrolRoutine.create_routine(self)
-
-        
-        # self.runner.add_day_off('Saturday')
-        # self.runner.add_day_off('Sunday')        
-        # self.runner.add_date_off(date(2014, 05, 26) )
-
-
 
 
     def on_idle(self):

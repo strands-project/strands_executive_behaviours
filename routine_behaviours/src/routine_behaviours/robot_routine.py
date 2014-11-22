@@ -14,6 +14,7 @@ from dateutil.tz import *
 from datetime import *
 
 from task_executor import task_routine
+from task_executor.task_routine import delta_between
 from copy import deepcopy
 
 from dynamic_reconfigure.server import Server
@@ -278,5 +279,24 @@ class RobotRoutine(object):
         rospy.loginfo('Idle for too long, going to charging point')
         # go for a quick charge
         self.demand_charge(self.idle_charge_duration)
+
+    def create_task_routine(self, tasks, daily_start=None, daily_end=None, repeat_delta=None):
+        """ 
+            If daily start or end not supplied use routine start or end
+            If delta not supplied, just do once during the start to end window
+        """
+
+        if not daily_start:
+            daily_start = self.daily_start
+
+        if not daily_end:
+            daily_end = self.daily_end
+
+        if not repeat_delta:
+            repeat_delta = delta_between(daily_start, daily_end)
+
+
+        self.routine.repeat_every_delta(tasks, delta=repeat_delta, times=1, start_time=daily_start, duration=delta_between(daily_start, daily_end))
+
 
 
