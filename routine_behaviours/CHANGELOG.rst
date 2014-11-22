@@ -2,6 +2,11 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added more flexible options for patrol behaviours.
+* Contributors: Nick Hawes
+
 0.0.7 (2014-11-21)
 ------------------
 * Removed ChargingPoint from randomly visited nodes.
