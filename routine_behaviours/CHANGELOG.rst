@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.8 (2014-11-22)
+------------------
 * Added more flexible options for patrol behaviours.
 * Contributors: Nick Hawes
 
