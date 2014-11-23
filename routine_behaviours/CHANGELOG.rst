@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.9 (2014-11-23)
+------------------
 * Added additional necessary replication.
 * Added rgbd recording.
 * Contributors: Nick Hawes
