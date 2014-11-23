@@ -14,6 +14,13 @@ from routine_behaviours.patrol_routine import PatrolRoutine, create_patrol_task
 import random
 
 
+def create_rgbd_record_task(waypoint_name, duration=rospy.Duration(30), camera='head_xtion', with_depth=True, with_rgb=True):
+    task = Task(start_node_id=waypoint_name, end_node_id=waypoint_name, action='record_camera', max_duration=duration)
+    task_utils.add_string_argument(task, camera)
+    task_utils.add_bool_argument(task, with_depth)
+    task_utils.add_bool_argument(task, with_rgb)
+    return task
+
 def create_3d_scan_task(waypoint_name):
     task = Task(start_node_id=waypoint_name, end_node_id=waypoint_name, action='ptu_pan_tilt_metric_map', max_duration=rospy.Duration(240))
     task_utils.add_int_argument(task, '-160')
@@ -56,8 +63,6 @@ class MarathonRoutine(PatrolRoutine):
     def __init__(self, daily_start, daily_end, tour_duration_estimate=None, idle_duration=rospy.Duration(5)):
         super(MarathonRoutine, self).__init__(daily_start=daily_start, daily_end=daily_end, tour_duration_estimate=tour_duration_estimate, idle_duration=idle_duration)        
 
-
-
     def create_3d_scan_routine(self, waypoints=None, daily_start=None, daily_end=None, repeat_delta=None):
         """
                     If waypoints now supplied, use all waypoints.
@@ -66,6 +71,13 @@ class MarathonRoutine(PatrolRoutine):
         if not waypoints: 
             waypoints = self.get_nodes()
         tasks = [ create_3d_scan_task(n) for n in waypoints ]
+        self.create_task_routine(tasks=tasks, daily_start=daily_start, daily_end=daily_end, repeat_delta=repeat_delta)
+
+
+    def create_rgbd_record_routine(self, waypoints=None, duration=rospy.Duration(30), camera='head_xtion', with_depth=True, with_rgb=True, daily_start=None, daily_end=None, repeat_delta=None):
+        if not waypoints: 
+            waypoints = self.get_nodes()
+        tasks = [ create_rgbd_record_task(n, duration=duration, camera=camera, with_depth=with_depth, with_rgb=with_rgb) for n in waypoints ]
         self.create_task_routine(tasks=tasks, daily_start=daily_start, daily_end=daily_end, repeat_delta=repeat_delta)
 
 
