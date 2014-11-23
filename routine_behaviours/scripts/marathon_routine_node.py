@@ -75,9 +75,20 @@ if __name__ == '__main__':
     routine.create_rgbd_record_routine(waypoints=rgbd_waypoints, duration=rospy.Duration(60), repeat_delta=timedelta(hours=2))
 
 
-    # the list of collections from the message_store db to be replicated
-    message_store_collections = ['heads','metric_map_data','rosout_agg','robot_pose','task_events','scheduling_problems','ws_observations','monitored_nav_events','people_perception']
-    routine.message_store_entries_to_replicate(message_store_collections)
+    # the list of collections to be replicated
+    db = 'message_store'
+    collections = ['heads','metric_map_data','rosout_agg','robot_pose','task_events','scheduling_problems','ws_observations','monitored_nav_events', 'people_perception']
+    routine.message_store_entries_to_replicate(collections)
+
+    db = 'roslog'
+    collections = ['head_xtion_compressed_depth_libav', 'head_xtion_compressed_rgb_theora']
+    routine.message_store_entries_to_replicate(collections)
+
+    db = 'metric_maps'
+    collections = ['data', 'summary']
+    routine.message_store_entries_to_replicate(collections)
+
+
 
     routine.start_routine()
 
