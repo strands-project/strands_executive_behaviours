@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.11 (2014-11-23)
+-------------------
 * Added db arg to method call.
 * Contributors: Nick Hawes
 
