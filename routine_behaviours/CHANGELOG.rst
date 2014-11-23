@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.10 (2014-11-23)
+-------------------
 * And added extra topic for @nilsbore
 * Switched to colour topic for tweeting.
 * Contributors: Nick Hawes
