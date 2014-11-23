@@ -86,7 +86,7 @@ class MarathonRoutine(PatrolRoutine):
         self.create_task_routine(tasks=tasks, daily_start=daily_start, daily_end=daily_end, repeat_delta=repeat_delta)
 
 
-    def create_tweet_routine(self, twitter_waypoints, img_topic='/head_xtion/rgb/image_mono', daily_start=None, daily_end=None, repeat_delta=None):
+    def create_tweet_routine(self, twitter_waypoints, img_topic='/head_xtion/rgb/image_color', daily_start=None, daily_end=None, repeat_delta=None):
         """
             [[waypoint, tweet][waypoint, tweet]]
         """
