@@ -78,16 +78,15 @@ if __name__ == '__main__':
     # the list of collections to be replicated
     db = 'message_store'
     collections = ['heads','metric_map_data','rosout_agg','robot_pose','task_events','scheduling_problems','ws_observations','monitored_nav_events', 'people_perception']
-    routine.message_store_entries_to_replicate(collections)
+    routine.message_store_entries_to_replicate(collections, db=db)
 
     db = 'roslog'
     collections = ['head_xtion_compressed_depth_libav', 'head_xtion_compressed_rgb_theora', 'head_xtion_compressed_rgb_compressed']
-    routine.message_store_entries_to_replicate(collections)
+    routine.message_store_entries_to_replicate(collections, db=db)
 
     db = 'metric_maps'
     collections = ['data', 'summary']
-    routine.message_store_entries_to_replicate(collections)
-
+    routine.message_store_entries_to_replicate(collections, db=db)
 
 
     routine.start_routine()
