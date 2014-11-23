@@ -81,7 +81,7 @@ if __name__ == '__main__':
     routine.message_store_entries_to_replicate(collections)
 
     db = 'roslog'
-    collections = ['head_xtion_compressed_depth_libav', 'head_xtion_compressed_rgb_theora']
+    collections = ['head_xtion_compressed_depth_libav', 'head_xtion_compressed_rgb_theora', 'head_xtion_compressed_rgb_compressed']
     routine.message_store_entries_to_replicate(collections)
 
     db = 'metric_maps'
