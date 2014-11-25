@@ -73,14 +73,14 @@ class MarathonRoutine(PatrolRoutine):
                     If waypoints now supplied, use all waypoints.
 
         """
-        if not waypoints: 
+        if waypoints is None: 
             waypoints = self.get_nodes()
         tasks = [ create_3d_scan_task(n) for n in waypoints ]
         self.create_task_routine(tasks=tasks, daily_start=daily_start, daily_end=daily_end, repeat_delta=repeat_delta)
 
 
     def create_rgbd_record_routine(self, waypoints=None, duration=rospy.Duration(30), camera='head_xtion', with_depth=True, with_rgb=True, daily_start=None, daily_end=None, repeat_delta=None):
-        if not waypoints: 
+        if waypoints is None: 
             waypoints = self.get_nodes()
         tasks = [ create_rgbd_record_task(n, duration=duration, camera=camera, with_depth=with_depth, with_rgb=with_rgb) for n in waypoints ]
         self.create_task_routine(tasks=tasks, daily_start=daily_start, daily_end=daily_end, repeat_delta=repeat_delta)
