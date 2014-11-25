@@ -23,9 +23,9 @@ def create_patrol_task(waypoint_name):
 class PatrolRoutine(RobotRoutine):
     """ Creates a routine which simply visits nodes. """
 
-    def __init__(self, daily_start, daily_end, tour_duration_estimate=None, idle_duration=rospy.Duration(5)):
+    def __init__(self, daily_start, daily_end, tour_duration_estimate=None, idle_duration=rospy.Duration(5), charging_point = 'ChargingPoint'):
         # super(PatrolRoutine, self).__init__(daily_start, daily_end)        
-        RobotRoutine.__init__(self, daily_start, daily_end, idle_duration=idle_duration)
+        RobotRoutine.__init__(self, daily_start, daily_end, idle_duration=idle_duration, charging_point=charging_point)
         self.node_names = set()
         self.tour_duration_estimate = tour_duration_estimate
         rospy.Subscriber('topological_map', TopologicalMap, self.map_callback)

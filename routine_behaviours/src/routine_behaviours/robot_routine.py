@@ -24,10 +24,11 @@ from routine_behaviours.cfg import ChargingThresholdsConfig
 class RobotRoutine(object):
 
     """Wraps up all the routine stuff with charging etc."""
-    def __init__(self, daily_start, daily_end, idle_duration):
+    def __init__(self, daily_start, daily_end, idle_duration, charging_point = 'ChargingPoint'):
 
         self.daily_start = daily_start
         self.daily_end = daily_end
+        self.charging_point = charging_point
         self._create_services()
 
         rospy.loginfo('Fetching parameters from dynamic_reconfigure')
@@ -52,7 +53,7 @@ class RobotRoutine(object):
         # create routine structure
         self.routine = task_routine.DailyRoutine(daily_start, daily_end)
         # create the object which will talk to the scheduler
-        self.runner = task_routine.DailyRoutineRunner(self.daily_start, self.daily_end, self.add_tasks, day_start_cb=self.on_day_start, day_end_cb=self.on_day_end, tasks_allowed_fn=self.battery_ok)
+        self.runner = task_routine.DailyRoutineRunner(self.daily_start, self.daily_end, self.add_tasks, day_start_cb=self.on_day_start, day_end_cb=self.on_day_end, tasks_allowed_fn=self.task_allowed_now)
 
 
         # calculate how long to sleep for overnight
@@ -87,6 +88,10 @@ class RobotRoutine(object):
         self.set_execution_status(True)
 
         rospy.Subscriber('current_schedule', ExecutionStatus, self._check_idle)
+
+
+    def task_allowed_now(self, task):
+        return self.battery_ok() or task.start_node_id == self.charging_point
 
     def dynamic_reconfigure_cb(self, config, level):
         rospy.loginfo("Config set to {force_charge_threshold}, {force_charge_addition}".format(**config))
