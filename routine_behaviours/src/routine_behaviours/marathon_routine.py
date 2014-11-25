@@ -62,11 +62,13 @@ def create_mongodb_store_task(db, to_replicate, delete_after_move=True):
     task_utils.add_bool_argument(task, delete_after_move)
     return task
 
+
+
 class MarathonRoutine(PatrolRoutine):
     """ Creates a routine that mixes specific tasks with patrolling nodes."""
 
-    def __init__(self, daily_start, daily_end, tour_duration_estimate=None, idle_duration=rospy.Duration(5)):
-        super(MarathonRoutine, self).__init__(daily_start=daily_start, daily_end=daily_end, tour_duration_estimate=tour_duration_estimate, idle_duration=idle_duration)        
+    def __init__(self, daily_start, daily_end, tour_duration_estimate=None, idle_duration=rospy.Duration(5), charging_point = 'ChargingPoint'):
+        super(MarathonRoutine, self).__init__(daily_start=daily_start, daily_end=daily_end, tour_duration_estimate=tour_duration_estimate, idle_duration=idle_duration, charging_point=charging_point)        
 
     def create_3d_scan_routine(self, waypoints=None, daily_start=None, daily_end=None, repeat_delta=None):
         """
