@@ -286,13 +286,13 @@ class RobotRoutine(object):
             If delta not supplied, just do once during the start to end window
         """
 
-        if not daily_start:
+        if daily_start is None:
             daily_start = self.daily_start
 
-        if not daily_end:
+        if daily_end is None:
             daily_end = self.daily_end
 
-        if not repeat_delta:
+        if repeat_delta is None:
             repeat_delta = delta_between(daily_start, daily_end)
 
 
