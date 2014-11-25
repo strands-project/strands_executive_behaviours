@@ -14,6 +14,11 @@ from routine_behaviours.patrol_routine import PatrolRoutine, create_patrol_task
 import random
 
 
+def create_simple_follow_task(waypoint_name, duration=rospy.Duration(300)):
+    task = Task(start_node_id=waypoint_name, end_node_id=waypoint_name, action='simple_follow', max_duration=duration)
+    task_utils.add_int_argument(task, duration.secs)
+    return task
+
 def create_rgbd_record_task(waypoint_name, duration=rospy.Duration(30), camera='head_xtion', with_depth=True, with_rgb=True):
     task = Task(start_node_id=waypoint_name, end_node_id=waypoint_name, action='record_camera', max_duration=duration)
     task_utils.add_string_argument(task, camera)
@@ -80,6 +85,12 @@ class MarathonRoutine(PatrolRoutine):
         tasks = [ create_3d_scan_task(n) for n in waypoints ]
         self.create_task_routine(tasks=tasks, daily_start=daily_start, daily_end=daily_end, repeat_delta=repeat_delta)
 
+
+    def create_simple_follow_routine(self, waypoints=None, duration=rospy.Duration(300), daily_start=None, daily_end=None, repeat_delta=None):
+        if waypoints is None: 
+            waypoints = self.get_nodes()
+        tasks = [ create_simple_follow_task(n, duration=duration) for n in waypoints ]
+        self.create_task_routine(tasks=tasks, daily_start=daily_start, daily_end=daily_end, repeat_delta=repeat_delta)
 
     def create_rgbd_record_routine(self, waypoints=None, duration=rospy.Duration(30), camera='head_xtion', with_depth=True, with_rgb=True, daily_start=None, daily_end=None, repeat_delta=None):
         if waypoints is None: 
