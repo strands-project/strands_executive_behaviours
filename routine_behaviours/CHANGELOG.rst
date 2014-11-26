@@ -2,6 +2,18 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added simple follow task in case we want to try it later.
+* Updated code to allow tasks at ChargingPoint when battery is low.
+* Checking for is not None explicitly. Sorry @lucab-eyer.
+* Merge pull request `#12 <https://github.com/strands-project/strands_executive_behaviours/issues/12>`_ from hawesie/hydro-devel
+  Added rechecking for docking during the night.
+* Use `is None` instead of `not`.
+  Same as `strands-project/strands_executive#116 <https://github.com/strands-project/strands_executive/issues/116>`_
+* Added rechecking for docking during the night.
+* Contributors: Lucas Beyer, Nick Hawes
+
 0.0.11 (2014-11-23)
 -------------------
 * Added db arg to method call.
