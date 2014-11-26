@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.12 (2014-11-26)
+-------------------
 * Added simple follow task in case we want to try it later.
 * Updated code to allow tasks at ChargingPoint when battery is low.
 * Checking for is not None explicitly. Sorry @lucab-eyer.
