@@ -154,7 +154,8 @@ class RobotRoutine(object):
                 # delay until next task
                 delay_until_next = schedule.execution_queue[0].execution_time - rostime_now
                 # rospy.loginfo('delay until next: %s' % delay_until_next.to_sec())
-                if delay_until_next > self.charge_window:
+                # if delay_until_next > self.charge_window:
+                if delay_until_next > rospy.Duration(60):
                     self.idle_count += 1
                 else:
                    self.idle_count = 0
@@ -167,7 +168,7 @@ class RobotRoutine(object):
 
         if self.idle_count > self.idle_thres:
             self.on_idle()
-
+            self.idle_count = 0
 
     def battery_ok(self):
         """ Reports false if battery is below force_charge_threshold or if it is above it but within force_charge_addition of the threshold and charging """ 
