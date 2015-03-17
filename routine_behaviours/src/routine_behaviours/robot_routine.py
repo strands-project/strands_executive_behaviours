@@ -22,9 +22,16 @@ from routine_behaviours.cfg import ChargingThresholdsConfig
 
 
 class RobotRoutine(object):
+    """ This class manages the over-arching routine behaviour of the robot. It monitors battery charge task level and can force charging when necessary and also generate tasks when the robot is idle. """
 
-    """Wraps up all the routine stuff with charging etc."""
     def __init__(self, daily_start, daily_end, idle_duration, charging_point = 'ChargingPoint'):
+        """
+        Args:
+            daily_start (datetime.time): The time of day the routine should start.
+            daily_end (datetime.time): The time of day the routine should end.
+            idle_duration (rospy.Duration): How long to be idle before triggering on_idle.
+            charging_point: Where to head to when charge is low
+        """
 
         self.daily_start = daily_start
         self.daily_end = daily_end
@@ -91,6 +98,13 @@ class RobotRoutine(object):
 
 
     def task_allowed_now(self, task):
+        """ 
+        Return true if a task can be send to the task_executor now.
+
+
+        This checks if battery level is fine and that the robot is not at the charging point. Subclasses can override this to provide additional checks.
+
+        """
         return self.battery_ok() or task.start_node_id == self.charging_point
 
     def dynamic_reconfigure_cb(self, config, level):
@@ -101,7 +115,10 @@ class RobotRoutine(object):
         return config
 
     def add_night_task(self, task):
-        if task.start_node_id == 'ChargingPoint':
+        """
+        Add a task to be executed after the routine ends. These tasks cannot involve movement and therefore must either have an empty start_node_id or be performed at the charging station.
+        """
+        if task.start_node_id == charging_point:
             task.start_node_id = ''
 
         if task.start_node_id != '':
@@ -111,18 +128,27 @@ class RobotRoutine(object):
         self.night_tasks.append(task)
 
     def is_before_day_start(self,time):
+        """
+        Check if the given time is before the start of the routine.
+        """
         if task_routine.time_less_than(self.daily_start,self.daily_end):  
             return task_routine.time_less_than(time, self.daily_start)
         else:
             return task_routine.time_less_than(time, self.daily_start) and task_routine.time_less_than(self.daily_end, time)
 
     def is_after_day_end(self,time):
+        """
+        Check if the given time is after the end of the routine.
+        """        
         if task_routine.time_less_than(self.daily_start,self.daily_end):  
             return task_routine.time_less_than(self.daily_end, time)
         else:
             return task_routine.time_less_than(self.daily_end, time) and task_routine.time_less_than(time, self.daily_start)
 
     def is_during_day(self,time):
+        """
+        Check if the given time is during the routine.
+        """        
         return not (self.is_before_day_start(time) or self.is_after_day_end(time))
 
 
@@ -154,7 +180,8 @@ class RobotRoutine(object):
                 # delay until next task
                 delay_until_next = schedule.execution_queue[0].execution_time - rostime_now
                 # rospy.loginfo('delay until next: %s' % delay_until_next.to_sec())
-                if delay_until_next > self.charge_window:
+                # if delay_until_next > self.charge_window:
+                if delay_until_next > rospy.Duration(60):
                     self.idle_count += 1
                 else:
                    self.idle_count = 0
@@ -167,7 +194,7 @@ class RobotRoutine(object):
 
         if self.idle_count > self.idle_thres:
             self.on_idle()
-
+            self.idle_count = 0
 
     def battery_ok(self):
         """ Reports false if battery is below force_charge_threshold or if it is above it but within force_charge_addition of the threshold and charging """ 
@@ -215,9 +242,9 @@ class RobotRoutine(object):
 
         if len(self.night_tasks) > 0 and not self.sent_night_tasks and self.battery_state is not None and self.battery_state.charging and not self.is_during_day(now):
             rospy.loginfo('Sending night tasks')
-            self.send_night_tasks()
+            self._send_night_tasks()
          
-    def send_night_tasks(self):
+    def _send_night_tasks(self):
         instantiated_night_tasks = []
 
         now = rospy.get_rostime()
@@ -258,13 +285,17 @@ class RobotRoutine(object):
     #     return [n for [n, meta] in nodes]
 
     def demand_charge(self, charge_duration):
-        charging_point = 'ChargingPoint'
+        """
+        Create an on-demand task to charge the robot for the given duration.
+        """
+        charging_point = self.charging_point
         charge_task = Task(action='wait_action', start_node_id=charging_point, end_node_id=charging_point, max_duration=charge_duration)
         task_utils.add_time_argument(charge_task, rospy.Time())
         task_utils.add_duration_argument(charge_task, charge_duration)       
         self.demand_task(charge_task)
 
     def clear_then_charge(self, charge_duration):
+        """ Clears the schedule of the robot before demanding a charge task. """
         try:
             self.clear_schedule()
         except rospy.ServiceException, e:
@@ -275,6 +306,11 @@ class RobotRoutine(object):
         self.demand_charge(charge_duration)
 
     def on_day_end(self):
+        """
+        Triggered when the routine ends for the day.
+
+        This clears tasks and triggers an on-demand charge.
+        """
         # end of day, charge for 10 mins; will charge all night as no moves allowed.
         self.clear_then_charge( rospy.Duration(10 * 60.0) ) 
 
@@ -282,10 +318,16 @@ class RobotRoutine(object):
 
        
     def on_day_start(self):        
+        """
+        Triggered when the routine starts for the day.
+        """
         rospy.loginfo('Good morning')
         self.sent_night_tasks = False
 
     def start_routine(self):
+        """
+        Starts the routine running. Must be called to generate behaviour.
+        """
         self.runner.add_tasks(self.routine.get_routine_tasks())
 
     def on_idle(self):
@@ -298,6 +340,10 @@ class RobotRoutine(object):
 
     def create_task_routine(self, tasks, daily_start=None, daily_end=None, repeat_delta=None):
         """ 
+            Create routine behaviour from given tasks using provided parameter. 
+
+            This largely passes arguments on to similar arguments in task_routine.repeat_every_delta, but constrains repeats to the bounds of the this routine.
+
             If daily start or end not supplied use routine start or end
             If delta not supplied, just do once during the start to end window
         """
@@ -316,3 +362,4 @@ class RobotRoutine(object):
 
 
 
+ 

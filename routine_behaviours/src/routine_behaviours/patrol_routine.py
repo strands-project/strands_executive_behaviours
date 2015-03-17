@@ -5,6 +5,7 @@ import rospy
 from strands_executive_msgs import task_utils
 from strands_executive_msgs.msg import Task
 from strands_navigation_msgs.msg import TopologicalMap
+from strands_navigation_msgs.srv import EstimateTravelTime
 from mongodb_store_msgs.msg import StringList
 from mongodb_store.message_store import MessageStoreProxy
 
@@ -51,16 +52,30 @@ class PatrolRoutine(RobotRoutine):
         return self.all_waypoints() - set(exceptions)
 
 
+    def max_single_trip_time(self, waypoints):
+
+        expected_time = rospy.ServiceProxy('topological_navigation/travel_time_estimator', EstimateTravelTime)        
+
+        max_time = rospy.Duration(0)
+        for start in waypoints:
+            for end in waypoints:
+                if start != end:
+                    et = expected_time(start=start, target=end).travel_time
+                    if et > max_time:
+                        max_time = et
+
+        return max_time
+
     def create_patrol_routine(self, waypoints=None, daily_start=None, daily_end=None, repeat_delta=None):
         if not waypoints: 
             waypoints = self.get_nodes()
 
         if not repeat_delta:
-            if not self.tour_duration_estimate:
-                single_node_estimate = 180
-                self.tour_duration_estimate=rospy.Duration(single_node_estimate * len(node_names))
-
-            repeat_delta = timedelta(seconds=self.tour_duration_estimate.to_sec())
+            # ignoring this now
+            # if not self.tour_duration_estimate:
+            single_node_estimate = self.max_single_trip_time(waypoints).to_sec()
+            tour_duration_estimate = single_node_estimate * (len(waypoints)-1) * 2
+            repeat_delta = timedelta(seconds=tour_duration_estimate)
 
         tasks = [ create_patrol_task(n) for n in waypoints ]
 
