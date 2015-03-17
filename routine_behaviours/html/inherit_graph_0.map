@@ -1,0 +1,6 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node2" href="$classroutine__behaviours_1_1robot__routine_1_1RobotRoutine.html" title="routine_behaviours.robot\l_routine.RobotRoutine" alt="" coords="121,5,290,44"/>
+<area shape="rect" id="node5" href="$classroutine__behaviours_1_1services_1_1TaskDemander.html" title="routine_behaviours.services.\lTaskDemander" alt="" coords="110,68,301,107"/>
+<area shape="rect" id="node3" href="$classroutine__behaviours_1_1patrol__routine_1_1PatrolRoutine.html" title="routine_behaviours.patrol\l_routine.PatrolRoutine" alt="" coords="349,5,521,44"/>
+<area shape="rect" id="node4" href="$classroutine__behaviours_1_1marathon__routine_1_1MarathonRoutine.html" title="routine_behaviours.marathon\l_routine.MarathonRoutine" alt="" coords="569,5,764,44"/>
+</map>

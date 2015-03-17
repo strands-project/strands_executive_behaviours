@@ -1,0 +1,23 @@
+actions: []
+authors: Nick Hawes <n.a.hawes@cs.bham.ac.uk>
+brief: ''
+bugtracker: ''
+depends:
+- dynamic_reconfigure
+- scitos_msgs
+- std_srvs
+- mongodb_store
+- strands_executive_msgs
+- std_msgs
+- strands_navigation_msgs
+- task_executor
+- catkin
+description: Code to generate routine robot behaviours, including repsonses to idle
+  and low charge situations.
+license: MIT
+maintainers: Nick Hawes <n.a.hawes@cs.bham.ac.uk>
+msgs: []
+package_type: package
+repo_url: ''
+srvs: []
+url: ''

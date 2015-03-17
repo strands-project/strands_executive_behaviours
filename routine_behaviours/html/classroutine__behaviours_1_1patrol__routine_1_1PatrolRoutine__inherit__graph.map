@@ -1,0 +1,4 @@
+<map id="routine_behaviours.patrol_routine.PatrolRoutine" name="routine_behaviours.patrol_routine.PatrolRoutine">
+<area shape="rect" id="node4" href="$classroutine__behaviours_1_1marathon__routine_1_1MarathonRoutine.html" title="routine_behaviours.marathon\l_routine.MarathonRoutine" alt="" coords="5,252,200,291"/>
+<area shape="rect" id="node2" href="$classroutine__behaviours_1_1robot__routine_1_1RobotRoutine.html" title="routine_behaviours.robot\l_routine.RobotRoutine" alt="" coords="18,79,187,117"/>
+</map>
