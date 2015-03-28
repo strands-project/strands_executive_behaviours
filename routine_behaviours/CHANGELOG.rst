@@ -2,6 +2,17 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Minor clean up.
+* Add day off check to idle trigger.
+  This fixes `#19 <https://github.com/strands-project/strands_executive_behaviours/issues/19>`_.
+* Added titles for nicer deliverables
+* added routine behaviour docs
+* Resetting idle count after idle action
+* Now doing a slightly smarter tour duration estimate
+* Contributors: Nick Hawes
+
 0.0.12 (2014-11-26)
 -------------------
 * Added simple follow task in case we want to try it later.
