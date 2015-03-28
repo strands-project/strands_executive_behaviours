@@ -84,9 +84,6 @@ class RobotRoutine(object):
 
         # how many 5 second idle counts to wait for before deciding we're idle
         # a count of 12 is one minute
-        
-
-
         self.idle_thres = int(idle_duration.to_sec() / 5)
 
         self.sent_to_charge = False
@@ -174,13 +171,14 @@ class RobotRoutine(object):
             if schedule.currently_executing:
                 self.idle_count = 0
                 return
-            if len(schedule.execution_queue) == 0:
+            elif len(schedule.execution_queue) == 0:
                 self.idle_count += 1
             else:
                 # delay until next task
                 delay_until_next = schedule.execution_queue[0].execution_time - rostime_now
                 # rospy.loginfo('delay until next: %s' % delay_until_next.to_sec())
-                # if delay_until_next > self.charge_window:
+                
+                
                 if delay_until_next > rospy.Duration(60):
                     self.idle_count += 1
                 else:
