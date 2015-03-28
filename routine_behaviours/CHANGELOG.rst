@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.13 (2015-03-28)
+-------------------
 * Minor clean up.
 * Add day off check to idle trigger.
   This fixes `#19 <https://github.com/strands-project/strands_executive_behaviours/issues/19>`_.
