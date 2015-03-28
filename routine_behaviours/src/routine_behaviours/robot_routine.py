@@ -193,7 +193,8 @@ class RobotRoutine(object):
         # rospy.loginfo('idle threshold: %s' % self.idle_thres)
 
         if self.idle_count > self.idle_thres:
-            self.on_idle()
+            if not self.runner.day_off():
+                self.on_idle()
             self.idle_count = 0
 
     def battery_ok(self):
