@@ -60,7 +60,7 @@ class RobotRoutine(object):
         # create routine structure
         self.routine = task_routine.DailyRoutine(daily_start, daily_end)
         # create the object which will talk to the scheduler
-        self.runner = task_routine.DailyRoutineRunner(self.daily_start, self.daily_end, self.add_tasks, day_start_cb=self.on_day_start, day_end_cb=self.on_day_end, tasks_allowed_fn=self.task_allowed_now)
+        self.runner = task_routine.DailyRoutineRunner(self.daily_start, self.daily_end, self.add_tasks, day_start_cb=self.on_day_start, day_end_cb=self.on_day_end, tasks_allowed_fn=self.task_allowed_now, daily_tasks_fn=self.extra_tasks_for_today)
 
 
         # calculate how long to sleep for overnight
@@ -92,6 +92,13 @@ class RobotRoutine(object):
         self.set_execution_status(True)
 
         rospy.Subscriber('current_schedule', ExecutionStatus, self._check_idle)
+
+    def extra_tasks_for_today(self):
+        """
+        Return a list of extra tasks for the day ahead. Called every morning before the routine day starts.
+        """
+        rospy.loginfo('extra_tasks_for_today')
+        return []
 
 
     def task_allowed_now(self, task):
@@ -274,14 +281,6 @@ class RobotRoutine(object):
         self.clear_schedule = rospy.ServiceProxy(clear_schedule_srv_name, Empty)
         self.maps_msg_store = MessageStoreProxy(collection='topological_maps')
 
-
-    # deprecated
-    # def load_nodes(self):
-    #     msg_store = MessageStoreProxy(collection='topological_maps')
-    #     query_meta = {}
-    #     query_meta["pointset"] = rospy.get_param('topological_map_name')
-    #     nodes = self.maps_msg_store.query(TopologicalNode._type, {}, query_meta)
-    #     return [n for [n, meta] in nodes]
 
     def demand_charge(self, charge_duration):
         """
