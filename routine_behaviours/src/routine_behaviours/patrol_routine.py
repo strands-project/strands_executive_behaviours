@@ -17,8 +17,6 @@ from routine_behaviours.robot_routine import RobotRoutine
 import random
 
 
-def create_patrol_task(waypoint_name):
-    return Task(start_node_id=waypoint_name, end_node_id=waypoint_name, max_duration=rospy.Duration(30))
 
 
 class PatrolRoutine(RobotRoutine):
@@ -77,7 +75,7 @@ class PatrolRoutine(RobotRoutine):
             tour_duration_estimate = single_node_estimate * (len(waypoints)-1) * 2
             repeat_delta = timedelta(seconds=tour_duration_estimate)
 
-        tasks = [ create_patrol_task(n) for n in waypoints ]
+        tasks = [ self.create_patrol_task(n) for n in waypoints ]
 
         self.create_task_routine(tasks=tasks, daily_start=daily_start, daily_end=daily_end, repeat_delta=repeat_delta)
 
@@ -97,6 +95,9 @@ class PatrolRoutine(RobotRoutine):
             self.random_nodes = list(self.random_nodes)
 
         rospy.loginfo('Idle for too long, generating a random waypoint task')
-        self.add_tasks([create_patrol_task(random.choice(self.random_nodes))])
+        self.add_tasks([self.create_patrol_task(random.choice(self.random_nodes))])
     
+
+    def create_patrol_task(self, waypoint_name, max_duration=rospy.Duration(30)):
+        return Task(start_node_id=waypoint_name, end_node_id=waypoint_name, max_duration=max_duration)
 
