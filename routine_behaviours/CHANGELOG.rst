@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.14 (2015-04-21)
+-------------------
 * Removed redundant/confusing legacy code.
 * Night tasks are now executed in a FIFO manner.
   Use this to fix strands-project/g4s_deployment/18
