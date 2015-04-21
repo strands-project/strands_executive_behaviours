@@ -2,6 +2,16 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Removed redundant/confusing legacy code.
+* Night tasks are now executed in a FIFO manner.
+  Use this to fix strands-project/g4s_deployment/18
+* Night tasks should now be executed in a FIFO order based on calls to add_night_task.
+  This should be used to fix https://github.com/strands-project/g4s_deployment/issues/18
+* Added ability to pull in tasks for just the day.
+* Contributors: Nick Hawes
+
 0.0.13 (2015-03-28)
 -------------------
 * Minor clean up.
