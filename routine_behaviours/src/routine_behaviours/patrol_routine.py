@@ -22,11 +22,10 @@ import random
 class PatrolRoutine(RobotRoutine):
     """ Creates a routine which simply visits nodes. """
 
-    def __init__(self, daily_start, daily_end, tour_duration_estimate=None, idle_duration=rospy.Duration(5), charging_point = 'ChargingPoint'):
+    def __init__(self, daily_start, daily_end, idle_duration=rospy.Duration(5), charging_point = 'ChargingPoint'):
         # super(PatrolRoutine, self).__init__(daily_start, daily_end)        
         RobotRoutine.__init__(self, daily_start, daily_end, idle_duration=idle_duration, charging_point=charging_point)
-        self.node_names = set()
-        self.tour_duration_estimate = tour_duration_estimate
+        self.node_names = set()        
         rospy.Subscriber('topological_map', TopologicalMap, self.map_callback)
         self.random_nodes = []
 
@@ -69,8 +68,7 @@ class PatrolRoutine(RobotRoutine):
             waypoints = self.get_nodes()
 
         if not repeat_delta:
-            # ignoring this now
-            # if not self.tour_duration_estimate:
+            # ignoring this now            
             single_node_estimate = self.max_single_trip_time(waypoints).to_sec()
             tour_duration_estimate = single_node_estimate * (len(waypoints)-1) * 2
             repeat_delta = timedelta(seconds=tour_duration_estimate)
