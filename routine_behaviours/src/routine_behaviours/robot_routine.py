@@ -122,11 +122,11 @@ class RobotRoutine(object):
         """
         Add a task to be executed after the routine ends. These tasks cannot involve movement and therefore must either have an empty start_node_id or be performed at the charging station.
         """
-        if task.start_node_id == charging_point:
-            task.start_node_id = ''
+        if task.start_node_id == '':
+            task.start_node_id = self.charging_point
 
-        if task.start_node_id != '':
-            rospy.logwarn('Rejecting task to do %s at %s as only location-free tasks are allowed at night')
+        if task.start_node_id != self.charging_point:
+            rospy.logwarn('Rejecting task to do %s at %s as only self.charging_point tasks are allowed at night')
             return 
 
         self.night_tasks.append(task)
@@ -247,6 +247,7 @@ class RobotRoutine(object):
         now = datetime.fromtimestamp(rostime_now.to_sec(), tzlocal()).time()
 
         if len(self.night_tasks) > 0 and not self.sent_night_tasks and self.battery_state is not None and self.battery_state.charging and not self.is_during_day(now):
+
             rospy.loginfo('Sending night tasks')
             self._send_night_tasks()
          
@@ -255,13 +256,16 @@ class RobotRoutine(object):
 
         now = rospy.get_rostime()
     
+        # hack to push scheduler to do them in the order they were added
+        delta = rospy.Duration(600)
+
         for task in self.night_tasks:
             night_task = deepcopy(task)
             night_task.start_after = now
             # some arbitraty time  -- 6 hours -- in the future
             night_task.end_before = now + rospy.Duration(60 * 60 * 12)
             instantiated_night_tasks.append(night_task)
-
+            now = now + delta
 
         self.add_tasks(instantiated_night_tasks)
         self.sent_night_tasks = True
