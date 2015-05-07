@@ -26,11 +26,13 @@ class PatrolRoutine(RobotRoutine):
         # super(PatrolRoutine, self).__init__(daily_start, daily_end)        
         RobotRoutine.__init__(self, daily_start, daily_end, idle_duration=idle_duration, charging_point=charging_point)
         self.node_names = set()        
+        self.topological_map = None
         rospy.Subscriber('topological_map', TopologicalMap, self.map_callback)
         self.random_nodes = []
 
     def map_callback(self, msg):        
         print 'got map: %s' % len(msg.nodes)
+        self.topological_map = msg
         self.node_names = set([node.name for node in msg.nodes if node.name != 'ChargingPoint'])
         if len(self.random_nodes) == 0:
             self.random_nodes = list(self.node_names)

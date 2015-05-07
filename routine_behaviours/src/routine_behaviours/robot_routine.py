@@ -6,6 +6,7 @@ from strands_executive_msgs import task_utils
 from strands_executive_msgs.msg import Task, ExecutionStatus
 from strands_executive_msgs.srv import AddTasks, SetExecutionStatus, DemandTask
 from std_srvs.srv import Empty
+from std_msgs.msg import String
 from mongodb_store.message_store import MessageStoreProxy
 
 from scitos_msgs.msg import BatteryState
@@ -35,7 +36,7 @@ class RobotRoutine(object):
 
         self.daily_start = daily_start
         self.daily_end = daily_end
-        self.charging_point = charging_point
+        self._charging_point = charging_point
         self._create_services()
 
         rospy.loginfo('Fetching parameters from dynamic_reconfigure')
@@ -72,8 +73,6 @@ class RobotRoutine(object):
         night_secs = (full_day_secs - end_time_secs) + start_time_secs
         self.night_duration = rospy.Duration(night_secs)
 
-
-
         # how big a gap in the scheduler should trigger a return to charger 
         self.charge_window = rospy.Duration(60 * 10)
 
@@ -93,6 +92,12 @@ class RobotRoutine(object):
 
         rospy.Subscriber('current_schedule', ExecutionStatus, self._check_idle)
 
+        self._current_node = None
+        rospy.Subscriber('/current_node', String, self._update_topological_location)
+
+    def _update_topological_location(self, node_name):
+        self._current_node = node_name.data
+
     def extra_tasks_for_today(self):
         """
         Return a list of extra tasks for the day ahead. Called every morning before the routine day starts.
@@ -109,7 +114,7 @@ class RobotRoutine(object):
         This checks if battery level is fine and that the robot is not at the charging point. Subclasses can override this to provide additional checks.
 
         """
-        return self.battery_ok() or task.start_node_id == self.charging_point
+        return self.battery_ok() or task.start_node_id == self._charging_point
 
     def dynamic_reconfigure_cb(self, config, level):
         rospy.loginfo("Config set to {force_charge_threshold}, {force_charge_addition}".format(**config))
@@ -123,10 +128,10 @@ class RobotRoutine(object):
         Add a task to be executed after the routine ends. These tasks cannot involve movement and therefore must either have an empty start_node_id or be performed at the charging station.
         """
         if task.start_node_id == '':
-            task.start_node_id = self.charging_point
+            task.start_node_id = self._charging_point
 
-        if task.start_node_id != self.charging_point:
-            rospy.logwarn('Rejecting task to do %s at %s as only self.charging_point tasks are allowed at night')
+        if task.start_node_id != self._charging_point:
+            rospy.logwarn('Rejecting task to do %s at %s as only self._charging_point tasks are allowed at night')
             return 
 
         self.night_tasks.append(task)
@@ -167,7 +172,13 @@ class RobotRoutine(object):
         # in order to get the night tasks launched, which are only sent when charging
 
 
-        on_charger = self.battery_state is not None and (self.battery_state.charging or self.battery_state.powerSupplyPresent)
+        # on_charger = self.battery_state is not None and (self.battery_state.charging or self.battery_state.powerSupplyPresent)
+
+        # now that topological navigation supports localisation by topic, 
+        # we can assume that if our location is the charging point then
+        # we are also charging
+        on_charger = (self._current_node == self._charging_point)
+
 
         # if it's night time, we're not doing anything and we're not on the charger
         if not self.is_during_day(now) and not schedule.currently_executing and not on_charger:
@@ -247,7 +258,6 @@ class RobotRoutine(object):
         now = datetime.fromtimestamp(rostime_now.to_sec(), tzlocal()).time()
 
         if len(self.night_tasks) > 0 and not self.sent_night_tasks and self.battery_state is not None and self.battery_state.charging and not self.is_during_day(now):
-
             rospy.loginfo('Sending night tasks')
             self._send_night_tasks()
          
@@ -262,7 +272,7 @@ class RobotRoutine(object):
         for task in self.night_tasks:
             night_task = deepcopy(task)
             night_task.start_after = now
-            # some arbitraty time  -- 6 hours -- in the future
+            # some arbitraty time  -- 12 hours -- in the future
             night_task.end_before = now + rospy.Duration(60 * 60 * 12)
             instantiated_night_tasks.append(night_task)
             now = now + delta
@@ -290,7 +300,7 @@ class RobotRoutine(object):
         """
         Create an on-demand task to charge the robot for the given duration.
         """
-        charging_point = self.charging_point
+        charging_point = self._charging_point
         charge_task = Task(action='wait_action', start_node_id=charging_point, end_node_id=charging_point, max_duration=charge_duration)
         task_utils.add_time_argument(charge_task, rospy.Time())
         task_utils.add_duration_argument(charge_task, charge_duration)       
