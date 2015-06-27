@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.16 (2015-06-27)
+-------------------
 * Tracking robot location in routine.
   This allows the test to see if it's at the charging point. Direct battery check removed for now due to fluctuating charging signal.
   Also patrol_routine now stores the topological map it receives for use in reasoning.
