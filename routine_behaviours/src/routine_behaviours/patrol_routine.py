@@ -31,7 +31,7 @@ class PatrolRoutine(RobotRoutine):
         self.random_nodes = []
 
     def map_callback(self, msg):        
-        print 'got map: %s' % len(msg.nodes)
+        # print 'got map: %s' % len(msg.nodes)
         self.topological_map = msg
         self.node_names = set([node.name for node in msg.nodes if node.name != 'ChargingPoint'])
         if len(self.random_nodes) == 0:
