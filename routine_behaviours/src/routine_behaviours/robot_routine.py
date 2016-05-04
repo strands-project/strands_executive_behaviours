@@ -38,6 +38,7 @@ class RobotRoutine(object):
         self.daily_end = daily_end
         self._charging_point = charging_point
         self._create_services()
+        self.allows_soft_threshold_tasks = []
 
         rospy.loginfo('Fetching parameters from dynamic_reconfigure')
         self.recfg_sever = Server(ChargingThresholdsConfig, self.dynamic_reconfigure_cb)
@@ -47,6 +48,7 @@ class RobotRoutine(object):
         # home many ~10Hz updates to wait for between forced charge counts
         self.battery_count_thres = 10 * 60 * 5
         self.battery_state = None
+
         # how long to charge for when force_charge_threshold is triggered
         self.force_charge_duration = rospy.Duration(60 * 60 * 2)
         self.sent_night_tasks = False
@@ -95,6 +97,10 @@ class RobotRoutine(object):
         self._current_node = None
         rospy.Subscriber('/current_node', String, self._update_topological_location)
 
+        # allow other clients to queue up tasks for 
+        rospy.Service('robot_routine/add_tasks', AddTasks, self._add_new_tasks_to_routine)
+
+
     def _update_topological_location(self, node_name):
         self._current_node = node_name.data
 
@@ -117,10 +123,16 @@ class RobotRoutine(object):
         return self.battery_ok() or task.start_node_id == self._charging_point
 
     def dynamic_reconfigure_cb(self, config, level):
-        rospy.loginfo("Config set to {force_charge_threshold}, {force_charge_addition}".format(**config))
+        rospy.loginfo("Config set to {force_charge_threshold}, {force_charge_addition}, {soft_charge_threshold}".format(**config))
 
         self.threshold = config['force_charge_threshold']
         self.addition = config['force_charge_addition']
+        self.soft_threshold = config['soft_charge_threshold']
+
+        if self.soft_threshold < self.threshold:
+            rospy.logwarn('soft_threshold less than hard threshold, updating')
+            self.soft_threshold = self.threshold
+
         return config
 
     def add_night_task(self, task):
@@ -213,6 +225,12 @@ class RobotRoutine(object):
                 self.on_idle()
             self.idle_count = 0
 
+
+    def _add_new_tasks_to_routine(self, req):
+        self.runner.insert_extra_tasks(req.tasks) 
+        # can't do anything useful for return values here
+        return []
+
     def battery_ok(self):
         """ Reports false if battery is below force_charge_threshold or if it is above it but within force_charge_addition of the threshold and charging """ 
 
@@ -224,7 +242,7 @@ class RobotRoutine(object):
             # else if we're charging we should allow some amount of charging to happen
             # before everything is ok again
             elif self.battery_state.charging or self.battery_state.powerSupplyPresent:
-                threshold = min(self.threshold + self.addition, 99)                
+                threshold = min(self.threshold + self.addition, 98)                
                 return self.battery_state.lifePercent > threshold
             else:
                 return True
