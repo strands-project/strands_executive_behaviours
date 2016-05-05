@@ -2,8 +2,8 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.17 (2016-05-05)
+-------------------
 * Adding pause services
 * Changing to use soft threshold for most battery checks
 * Exposing a service to add tasks to the routine
