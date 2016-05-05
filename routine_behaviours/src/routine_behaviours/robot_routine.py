@@ -38,7 +38,7 @@ class RobotRoutine(object):
         self.daily_end = daily_end
         self._charging_point = charging_point
         self._create_services()
-        self.allows_soft_threshold_tasks = []
+        self.allows_soft_threshold_tasks = set([])
 
         rospy.loginfo('Fetching parameters from dynamic_reconfigure')
         self.recfg_sever = Server(ChargingThresholdsConfig, self.dynamic_reconfigure_cb)
@@ -120,7 +120,14 @@ class RobotRoutine(object):
         This checks if battery level is fine and that the robot is not at the charging point. Subclasses can override this to provide additional checks.
 
         """
-        return self.battery_ok() or task.start_node_id == self._charging_point
+        # if battery is above soft threshold or has charged enough 
+        if self.battery_ok():
+            return True
+        # else we're about the hard threshold and the task is allowable in the soft action set
+        elif self.battery_state.lifePercent > self.threshold and task.action in self.allows_soft_threshold_tasks:
+            return True
+        else:
+            return task.start_node_id == self._charging_point
 
     def dynamic_reconfigure_cb(self, config, level):
         rospy.loginfo("Config set to {force_charge_threshold}, {force_charge_addition}, {soft_charge_threshold}".format(**config))
@@ -237,12 +244,12 @@ class RobotRoutine(object):
         if self.battery_state is not None:
 
             # if batter is below threshold, it's never ok
-            if self.battery_state.lifePercent < self.threshold:                
+            if self.battery_state.lifePercent < self.soft_threshold:                
                 return False
             # else if we're charging we should allow some amount of charging to happen
             # before everything is ok again
             elif self.battery_state.charging or self.battery_state.powerSupplyPresent:
-                threshold = min(self.threshold + self.addition, 98)                
+                threshold = min(self.soft_threshold + self.addition, 98)                
                 return self.battery_state.lifePercent > threshold
             else:
                 return True
