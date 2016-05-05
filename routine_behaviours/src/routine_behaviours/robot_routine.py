@@ -145,7 +145,7 @@ class RobotRoutine(object):
         elif self.battery_state.lifePercent > self.threshold and task.action in self.allows_soft_threshold_tasks:
             return True
         else:
-            return task.start_node_id in self._charging_points
+            return (task.start_node_id in self._charging_points and self._current_node == task.start_node_id)
 
     def dynamic_reconfigure_cb(self, config, level):
         rospy.loginfo("Config set to {force_charge_threshold}, {force_charge_addition}, {soft_charge_threshold}".format(**config))
@@ -164,10 +164,7 @@ class RobotRoutine(object):
         """
         Add a task to be executed after the routine ends. These tasks cannot involve movement and therefore must either have an empty start_node_id or be performed at the charging station.
         """
-        if task.start_node_id == '':
-            task.start_node_id = self._charging_points[0]
-
-        if not task.start_node_id in self._charging_points:
+        if task.start_node_id != ''  and not task.start_node_id in self._charging_points:
             rospy.logwarn('Rejecting task night task as only self._charging_points tasks are allowed at night')
             return 
 
