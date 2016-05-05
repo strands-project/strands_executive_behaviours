@@ -40,7 +40,7 @@ class RobotRoutine(object):
             charging_point = [charging_point]
         self._charging_points = charging_point
         self._create_services()
-        self.allows_soft_threshold_tasks = set([])
+        
         self._routine_is_paused = False
 
         rospy.loginfo('Fetching parameters from dynamic_reconfigure')
@@ -127,6 +127,9 @@ class RobotRoutine(object):
         return []
 
 
+    def _is_time_critical(self, task):
+        return task.start_after == task.end_before
+
     def task_allowed_now(self, task):
         """ 
         Return true if a task can be send to the task_executor now.
@@ -142,7 +145,7 @@ class RobotRoutine(object):
         elif self.battery_ok():
             return True
         # else we're about the hard threshold and the task is allowable in the soft action set
-        elif self.battery_state.lifePercent > self.threshold and task.action in self.allows_soft_threshold_tasks:
+        elif self.battery_state.lifePercent > self.threshold and self._is_time_critical(task):
             return True
         else:
             return (task.start_node_id in self._charging_points and self._current_node == task.start_node_id)
