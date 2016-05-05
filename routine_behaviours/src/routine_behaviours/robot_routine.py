@@ -141,14 +141,17 @@ class RobotRoutine(object):
         # if routine is paused then no tasks allowed
         if self._routine_is_paused:
             return False
+
         # if battery is above soft threshold or has charged enough 
-        elif self.battery_ok():
+        if self.battery_ok():
+            rospy.loginfo('Battery is ok for task')
             return True
-        # else we're about the hard threshold and the task is allowable in the soft action set
-        elif self.battery_state.lifePercent > self.threshold and self._is_time_critical(task):
+        
+        # else we're about the hard threshold and the task is time critical
+        if self.battery_state.lifePercent > self.threshold and self._is_time_critical(task):
             return True
-        else:
-            return (task.start_node_id in self._charging_points and self._current_node == task.start_node_id)
+        
+        return (task.start_node_id in self._charging_points and self._current_node == task.start_node_id)
 
     def dynamic_reconfigure_cb(self, config, level):
         rospy.loginfo("Config set to {force_charge_threshold}, {force_charge_addition}, {soft_charge_threshold}".format(**config))
