@@ -5,7 +5,7 @@ import rospy
 from strands_executive_msgs import task_utils
 from strands_executive_msgs.msg import Task, ExecutionStatus
 from strands_executive_msgs.srv import AddTasks, SetExecutionStatus, DemandTask
-from std_srvs.srv import Empty
+from std_srvs.srv import Empty, EmptyResponse
 from std_msgs.msg import String
 from mongodb_store.message_store import MessageStoreProxy
 
@@ -39,6 +39,7 @@ class RobotRoutine(object):
         self._charging_point = charging_point
         self._create_services()
         self.allows_soft_threshold_tasks = set([])
+        self._routine_is_paused = False
 
         rospy.loginfo('Fetching parameters from dynamic_reconfigure')
         self.recfg_sever = Server(ChargingThresholdsConfig, self.dynamic_reconfigure_cb)
@@ -100,6 +101,19 @@ class RobotRoutine(object):
         # allow other clients to queue up tasks for 
         rospy.Service('robot_routine/add_tasks', AddTasks, self._add_new_tasks_to_routine)
 
+        # allow 
+        rospy.Service('robot_routine/pause_routine', Empty, self._pause_routine)
+        rospy.Service('robot_routine/unpause_routine', Empty, self._unpause_routine)
+
+    def _pause_routine(self, req):
+        rospy.loginfo('Pausing routine')
+        self._routine_is_paused = True
+        return EmptyResponse()
+
+    def _unpause_routine(self, req):
+        rospy.loginfo('Unpausing routine')
+        self._routine_is_paused = False
+        return EmptyResponse()
 
     def _update_topological_location(self, node_name):
         self._current_node = node_name.data
@@ -120,8 +134,12 @@ class RobotRoutine(object):
         This checks if battery level is fine and that the robot is not at the charging point. Subclasses can override this to provide additional checks.
 
         """
+
+        # if routine is paused then no tasks allowed
+        if self._routine_is_paused:
+            return False
         # if battery is above soft threshold or has charged enough 
-        if self.battery_ok():
+        elif self.battery_ok():
             return True
         # else we're about the hard threshold and the task is allowable in the soft action set
         elif self.battery_state.lifePercent > self.threshold and task.action in self.allows_soft_threshold_tasks:
@@ -228,7 +246,7 @@ class RobotRoutine(object):
         # rospy.loginfo('idle threshold: %s' % self.idle_thres)
 
         if self.idle_count > self.idle_thres:
-            if not self.runner.day_off():
+            if not self.runner.day_off() and not self._routine_is_paused:
                 self.on_idle()
             self.idle_count = 0
 
