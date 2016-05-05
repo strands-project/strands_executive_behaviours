@@ -53,7 +53,7 @@ class RobotRoutine(object):
         self.battery_state = None
 
         # how long to charge for when force_charge_threshold is triggered
-        self.force_charge_duration = rospy.Duration(60 * 60 * 2)
+        self.force_charge_duration = rospy.Duration(2 * 60)
         self.sent_night_tasks = False
         self.night_tasks = []
 
