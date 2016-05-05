@@ -16,8 +16,8 @@ class DummyBattery(object):
         # run at 10hz which matches the scitos
         self._rate = 10
         # battery percent per second
-        self._discharge_rate = rospy.get_param('~discharge_rate', 0.03) / self._rate
-        self._recharge_rate = rospy.get_param('~recharge_rate', 1.0) / self._rate
+        self._discharge_rate = float(rospy.get_param('~discharge_rate', 0.03)) / self._rate
+        self._recharge_rate = float(rospy.get_param('~recharge_rate', 1.0)) / self._rate
         self._current_level = 100
 
         rospy.Subscriber('/current_node', String, self._update_topological_location)
