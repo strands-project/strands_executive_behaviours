@@ -2,6 +2,13 @@
 Changelog for package routine_behaviours
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Adding pause services
+* Changing to use soft threshold for most battery checks
+* Exposing a service to add tasks to the routine
+* Contributors: Nick Hawes
+
 0.0.16 (2015-06-27)
 -------------------
 * Tracking robot location in routine.
