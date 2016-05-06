@@ -323,8 +323,12 @@ class RobotRoutine(object):
             instantiated_night_tasks.append(night_task)
             now = now + delta
 
-        self.add_tasks(instantiated_night_tasks)
-        self.sent_night_tasks = True
+        try:
+            self.add_tasks(instantiated_night_tasks)
+            self.sent_night_tasks = True
+        except Exception, e:
+            rospy.logwarn('Exception on scheduler service call: %s' % e)
+
 
     def _create_services(self):
         add_tasks_srv_name = '/task_executor/add_tasks'
