@@ -287,8 +287,16 @@ class RobotRoutine(object):
             
             # if not ok and not triggered yet
             if self.battery_count == 0:
-                rospy.logwarn('Battery below force charge threshold: %s ' % (self.battery_state.lifePercent))
-                self.clear_then_charge(self.force_charge_duration)
+                # if we're below soft threshold but above hard threshold then add a charge tasks not clear
+                if self.battery_state.lifePercent > self.threshold:
+                    rospy.logwarn('Battery below soft charge threshold: %s ' % (self.battery_state.lifePercent)) 
+                    self.add_charge(self.force_charge_duration)
+                    # bit of a hack to delay the update for this to happen again
+                    self.battery_count = -(self.battery_count_thres * 2) 
+
+                else:
+                    rospy.logwarn('Battery below force charge threshold: %s ' % (self.battery_state.lifePercent))
+                    self.clear_then_charge(self.force_charge_duration)
             
             # update count
             self.battery_count += 1
@@ -346,22 +354,39 @@ class RobotRoutine(object):
         self.maps_msg_store = MessageStoreProxy(collection='topological_maps')
 
 
-    def demand_charge(self, charge_duration):
-        """
-        Create an on-demand task to charge the robot for the given duration.
-        """
+    def _create_charge_task(self, charge_duration):
         charging_point = self._charging_points[0]
         charge_task = Task(action='wait_action', start_node_id=charging_point, end_node_id=charging_point, max_duration=charge_duration)
         task_utils.add_time_argument(charge_task, rospy.Time())
         task_utils.add_duration_argument(charge_task, charge_duration)       
-        self.demand_task(charge_task)
+        return charge_task
+
+    def demand_charge(self, charge_duration):
+        """
+        Create an on-demand task to charge the robot for the given duration.
+        """
+        try:
+            self.demand_task(self._create_charge_task(charge_duration))
+        except rospy.ServiceException, e:
+            rospy.logwarn('Service threw exception: %s'% e)
+
+    def add_charge(self, charge_duration):
+        """
+        Create an on-demand task to charge the robot for the given duration.
+        """
+        try:
+            self.add_tasks([self._create_charge_task(charge_duration)])
+        except rospy.ServiceException, e:
+            rospy.logwarn('Service threw exception: %s'% e)
+
+ 
 
     def clear_then_charge(self, charge_duration):
         """ Clears the schedule of the robot before demanding a charge task. """
         try:
             self.clear_schedule()
         except rospy.ServiceException, e:
-            rospy.loginfo('Empty service complaint occurs here. Should be safe: %s'% e)
+            rospy.logwarn('Empty service complaint occurs here. Should be safe: %s'% e)
 
         # safety sleep, but could be issues here
         rospy.sleep(10)
