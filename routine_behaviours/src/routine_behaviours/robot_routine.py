@@ -355,8 +355,14 @@ class RobotRoutine(object):
 
 
     def _create_charge_task(self, charge_duration):
-        charging_point = self._charging_points[0]
-        charge_task = Task(action='wait_action', start_node_id=charging_point, end_node_id=charging_point, max_duration=charge_duration)
+        charge_task = Task(action='wait_action', max_duration=charge_duration)
+        charge_task.start_node_id = ''
+
+        # allow it to charge at any of the points
+        for wp in self._charging_points:
+            charge_task.start_node_id += '%s | '
+        charge_task.start_node_id = charge_task.start_node_id[:-3] 
+
         task_utils.add_time_argument(charge_task, rospy.Time())
         task_utils.add_duration_argument(charge_task, charge_duration)       
         return charge_task
