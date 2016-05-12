@@ -21,6 +21,12 @@ from copy import deepcopy
 from dynamic_reconfigure.server import Server
 from routine_behaviours.cfg import ChargingThresholdsConfig
 
+NO_THRESHOLD = 2
+
+UNDER_SOFT_THRESHOLD = 1
+
+UNDER_HARD_THRESHOLD = 0
+
 
 class RobotRoutine(object):
     """ This class manages the over-arching routine behaviour of the robot. It monitors battery charge task level and can force charging when necessary and also generate tasks when the robot is idle. """
@@ -51,6 +57,10 @@ class RobotRoutine(object):
         # home many ~10Hz updates to wait for between forced charge counts
         self.battery_count_thres = 10 * 60 * 5
         self.battery_state = None
+
+        self.battery_threshold_state = NO_THRESHOLD
+        self.battery_threshold_state_change = 0
+
 
         # how long to charge for when force_charge_threshold is triggered
         self.force_charge_duration = rospy.Duration(2 * 60)
@@ -279,9 +289,30 @@ class RobotRoutine(object):
             rospy.logwarn('No battery received when checking')
             return True
 
+    def _update_battery_threshold(self):
+        """
+        Updates the discrete battery threshold of the routine.
+        """
+
+        if self.battery_state.lifePercent < self.threshold:
+            new_state = UNDER_HARD_THRESHOLD
+        elif  self.battery_state.lifePercent < self.soft_threshold:
+            new_state = UNDER_SOFT_THRESHOLD
+        else:
+            new_state = NO_THRESHOLD
+
+        self.battery_threshold_state_change = new_state - self.battery_threshold_state
+        self.battery_threshold_state = new_state
+
+
     def _check_battery(self, battery_state):
         self.battery_state = battery_state
 
+        self._update_battery_threshold()
+
+        if self.battery_threshold_state_change < 0:
+            rospy.logwarn('Passed into a lower battery threshold, clearing execution schedule')
+            self.clear_execution_schedule()
 
         if not self.battery_ok():
             
@@ -357,15 +388,22 @@ class RobotRoutine(object):
     def _create_charge_task(self, charge_duration):
         charge_task = Task(action='wait_action', max_duration=charge_duration)
         charge_task.start_node_id = ''
+        charge_task.priority = Task.HIGH_PRIORITY
 
         # allow it to charge at any of the points
         for wp in self._charging_points:
             charge_task.start_node_id += '%s | ' % wp
         charge_task.start_node_id = charge_task.start_node_id[:-3] 
 
+        charge_task.start_after = rospy.get_rostime()
+        charge_task.end_before = charge_task.start_after + rospy.Duration(60 * 60)
+
         task_utils.add_time_argument(charge_task, rospy.Time())
         task_utils.add_duration_argument(charge_task, charge_duration)       
         return charge_task
+
+
+
 
     def demand_charge(self, charge_duration):
         """
@@ -385,14 +423,21 @@ class RobotRoutine(object):
         except rospy.ServiceException, e:
             rospy.logwarn('Service threw exception: %s'% e)
 
- 
 
-    def clear_then_charge(self, charge_duration):
-        """ Clears the schedule of the robot before demanding a charge task. """
+    def clear_execution_schedule(self):
+        """
+        Clears execution schedule of the robot.
+        """
         try:
             self.clear_schedule()
         except rospy.ServiceException, e:
             rospy.logwarn('Empty service complaint occurs here. Should be safe: %s'% e)
+
+
+    def clear_then_charge(self, charge_duration):
+        """ Clears the schedule of the robot before demanding a charge task. """
+
+        self.clear_execution_schedule()
 
         # safety sleep, but could be issues here
         rospy.sleep(10)
