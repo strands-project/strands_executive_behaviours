@@ -31,7 +31,7 @@ UNDER_HARD_THRESHOLD = 0
 class RobotRoutine(object):
     """ This class manages the over-arching routine behaviour of the robot. It monitors battery charge task level and can force charging when necessary and also generate tasks when the robot is idle. """
 
-    def __init__(self, daily_start, daily_end, idle_duration, charging_point = 'ChargingPoint'):
+    def __init__(self, daily_start, daily_end, idle_duration, charging_point = 'ChargingPoint', pre_start_window=timedelta(hours=1)):
         """
         Args:
             daily_start (datetime.time): The time of day the routine should start.
@@ -75,7 +75,7 @@ class RobotRoutine(object):
         # create routine structure
         self.routine = task_routine.DailyRoutine(daily_start, daily_end)
         # create the object which will talk to the scheduler
-        self.runner = task_routine.DailyRoutineRunner(self.daily_start, self.daily_end, self.add_tasks, day_start_cb=self.on_day_start, day_end_cb=self.on_day_end, tasks_allowed_fn=self.task_allowed_now, daily_tasks_fn=self.extra_tasks_for_today)
+        self.runner = task_routine.DailyRoutineRunner(self.daily_start, self.daily_end, self.add_tasks, day_start_cb=self.on_day_start, day_end_cb=self.on_day_end, tasks_allowed_fn=self.task_allowed_now, daily_tasks_fn=self.extra_tasks_for_today, pre_start_window=pre_start_window)
 
 
         # calculate how long to sleep for overnight

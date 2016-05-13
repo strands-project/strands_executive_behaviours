@@ -22,9 +22,9 @@ import random
 class PatrolRoutine(RobotRoutine):
     """ Creates a routine which simply visits nodes. """
 
-    def __init__(self, daily_start, daily_end, idle_duration=rospy.Duration(5), charging_point = 'ChargingPoint'):
+    def __init__(self, daily_start, daily_end, idle_duration=rospy.Duration(5), charging_point = 'ChargingPoint', pre_start_window=timedelta(hours=1)):
         # super(PatrolRoutine, self).__init__(daily_start, daily_end)        
-        RobotRoutine.__init__(self, daily_start, daily_end, idle_duration=idle_duration, charging_point=charging_point)
+        RobotRoutine.__init__(self, daily_start, daily_end, idle_duration=idle_duration, charging_point=charging_point, pre_start_window=pre_start_window)
         self.node_names = set()        
         self.topological_map = None
         rospy.Subscriber('topological_map', TopologicalMap, self.map_callback)
