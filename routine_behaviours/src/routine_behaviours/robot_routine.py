@@ -19,7 +19,7 @@ from task_executor.task_routine import delta_between
 from copy import deepcopy
 
 from dynamic_reconfigure.server import Server
-from routine_behaviours.cfg import ChargingThresholdsConfig
+from routine_behaviours.cfg import RoutineParametersConfig
 
 NO_THRESHOLD = 2
 
@@ -50,8 +50,8 @@ class RobotRoutine(object):
         self._routine_is_paused = False
 
         rospy.loginfo('Fetching parameters from dynamic_reconfigure')
-        self.recfg_sever = Server(ChargingThresholdsConfig, self.dynamic_reconfigure_cb)
-        
+        Server(RoutineParametersConfig, self.dynamic_reconfigure_cb)
+
 
         self.battery_count = 0
         # home many ~10Hz updates to wait for between forced charge counts
@@ -73,9 +73,10 @@ class RobotRoutine(object):
 
         
         # create routine structure
-        self.routine = task_routine.DailyRoutine(daily_start, daily_end)
+        self.routine = self.new_routine()
+
         # create the object which will talk to the scheduler
-        self.runner = task_routine.DailyRoutineRunner(self.daily_start, self.daily_end, self.add_tasks, day_start_cb=self.on_day_start, day_end_cb=self.on_day_end, tasks_allowed_fn=self.task_allowed_now, daily_tasks_fn=self.extra_tasks_for_today, pre_start_window=pre_start_window)
+        self.runner = self.new_routine_runner()
 
 
         # calculate how long to sleep for overnight
@@ -107,7 +108,7 @@ class RobotRoutine(object):
         rospy.Subscriber('current_schedule', ExecutionStatus, self._check_idle)
 
         self._current_node = None
-        rospy.Subscriber('/current_node', String, self._update_topological_location)
+        rospy.Subscriber('current_node', String, self._update_topological_location)
 
         # allow other clients to queue up tasks for 
         rospy.Service('robot_routine/add_tasks', AddTasks, self._add_new_tasks_to_routine)
@@ -115,6 +116,13 @@ class RobotRoutine(object):
         # allow 
         rospy.Service('robot_routine/pause_routine', Empty, self._pause_routine)
         rospy.Service('robot_routine/unpause_routine', Empty, self._unpause_routine)
+
+    def new_routine(self):
+        return task_routine.DailyRoutine(self.daily_start, self.daily_end)
+
+    def new_routine_runner(self):
+        return task_routine.DailyRoutineRunner(self.daily_start, self.daily_end, self.add_tasks, day_start_cb=self.on_day_start, day_end_cb=self.on_day_end, tasks_allowed_fn=self.task_allowed_now, daily_tasks_fn=self.extra_tasks_for_today, pre_start_window=pre_start_window)
+
 
     def _pause_routine(self, req):
         rospy.loginfo('Pausing routine')
@@ -152,11 +160,16 @@ class RobotRoutine(object):
         if self._routine_is_paused:
             return False
 
+        for wp in task_utils.get_start_node_ids(task):
+            if wp in self.blacklisted_nodes:
+                rospy.logwarn('Node was blacklisted for task: %s' % wp)
+                return False
+
         # if battery is above soft threshold or has charged enough 
         if self.battery_ok():
             rospy.loginfo('Battery is ok for task')
             return True
-        
+            
         # else we're about the hard threshold and the task is time critical
         if self.battery_state.lifePercent > self.threshold and self._is_time_critical(task):
             return True
@@ -164,7 +177,12 @@ class RobotRoutine(object):
         return (task.start_node_id in self._charging_points and self._current_node == task.start_node_id)
 
     def dynamic_reconfigure_cb(self, config, level):
-        rospy.loginfo("Config set to {force_charge_threshold}, {force_charge_addition}, {soft_charge_threshold}".format(**config))
+        conf = self.battery_thresholds_cb(config, level)
+        conf = self.blacklisted_nodes_cb(config, level)
+        return conf
+
+    def battery_thresholds_cb(self, config, level):
+        rospy.loginfo("Battery thresholds set to {force_charge_threshold}, {force_charge_addition}, {soft_charge_threshold}".format(**config))
 
         self.threshold = config['force_charge_threshold']
         self.addition = config['force_charge_addition']
@@ -175,6 +193,14 @@ class RobotRoutine(object):
             self.soft_threshold = self.threshold
 
         return config
+
+    def blacklisted_nodes_cb(self, config, level):
+
+
+        self.blacklisted_nodes = map(str.strip, config['blacklisted_nodes'].split(','))        
+        rospy.loginfo("Blacklisted nodes set to: %s" % self.blacklisted_nodes)
+        return config
+
 
     def add_night_task(self, task):
         """
