@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
+from __future__ import with_statement 
+
 import rospy
+import threading
 
 from strands_executive_msgs import task_utils
 from strands_executive_msgs.msg import Task, ExecutionStatus
@@ -15,6 +18,7 @@ from dateutil.tz import *
 from datetime import *
 
 from task_executor import task_routine
+from task_executor.utils import get_start_node_ids
 from task_executor.task_routine import delta_between
 from copy import deepcopy
 
@@ -40,13 +44,16 @@ class RobotRoutine(object):
             charging_point: Where to head to when charge is low
         """
 
+        self._schedule_lock = threading.Lock()
+
         self.daily_start = daily_start
         self.daily_end = daily_end
         if not isinstance(charging_point, list):
             charging_point = [charging_point]
         self._charging_points = charging_point
+        self.pre_start_window = pre_start_window
         self._create_services()
-        
+                
         self._routine_is_paused = False
 
         rospy.loginfo('Fetching parameters from dynamic_reconfigure')
@@ -96,22 +103,25 @@ class RobotRoutine(object):
 
         self.idle_count = 0
 
-        # how many 5 second idle counts to wait for before deciding we're idle
-        # a count of 12 is one minute
-        self.idle_thres = int(idle_duration.to_sec() / 5)
+        idle_interval_check = rospy.Duration(5)
+        self._idle_timer = rospy.Timer(period = idle_interval_check, callback = self._check_idle)
+
+        # how many idle counts to wait for before deciding we're idle
+        self.idle_thres = int(idle_duration.to_sec() / idle_interval_check.to_sec())
 
         self.sent_to_charge = False
 
          # Set the task executor running in case it's not
         self.set_execution_status(True)
 
-        rospy.Subscriber('current_schedule', ExecutionStatus, self._check_idle)
+        self.schedule = None
+        rospy.Subscriber('current_schedule', ExecutionStatus, self._save_schedule)
 
         self._current_node = None
         rospy.Subscriber('current_node', String, self._update_topological_location)
 
         # allow other clients to queue up tasks for 
-        rospy.Service('robot_routine/add_tasks', AddTasks, self._add_new_tasks_to_routine)
+        rospy.Service('robot_routine/add_tasks', AddTasks, self._add_new_tasks_to_routine_srv)
 
         # allow 
         rospy.Service('robot_routine/pause_routine', Empty, self._pause_routine)
@@ -121,7 +131,7 @@ class RobotRoutine(object):
         return task_routine.DailyRoutine(self.daily_start, self.daily_end)
 
     def new_routine_runner(self):
-        return task_routine.DailyRoutineRunner(self.daily_start, self.daily_end, self.add_tasks, day_start_cb=self.on_day_start, day_end_cb=self.on_day_end, tasks_allowed_fn=self.task_allowed_now, daily_tasks_fn=self.extra_tasks_for_today, pre_start_window=pre_start_window)
+        return task_routine.DailyRoutineRunner(self.daily_start, self.daily_end, self.add_tasks, day_start_cb=self.on_day_start, day_end_cb=self.on_day_end, tasks_allowed_fn=self.task_allowed_now, daily_tasks_fn=self.extra_tasks_for_today, pre_start_window=self.pre_start_window)
 
 
     def _pause_routine(self, req):
@@ -160,11 +170,11 @@ class RobotRoutine(object):
         if self._routine_is_paused:
             return False
 
-        for wp in task_utils.get_start_node_ids(task):
+        for wp in get_start_node_ids(task):
             if wp in self.blacklisted_nodes:
                 rospy.logwarn('Node was blacklisted for task: %s' % wp)
                 return False
-
+            
         # if battery is above soft threshold or has charged enough 
         if self.battery_ok():
             rospy.loginfo('Battery is ok for task')
@@ -198,6 +208,10 @@ class RobotRoutine(object):
 
 
         self.blacklisted_nodes = map(str.strip, config['blacklisted_nodes'].split(','))        
+
+        if len(self.blacklisted_nodes) and self.blacklisted_nodes[0] == '':
+            self.blacklisted_nodes = []
+
         rospy.loginfo("Blacklisted nodes set to: %s" % self.blacklisted_nodes)
         return config
 
@@ -236,62 +250,74 @@ class RobotRoutine(object):
         """        
         return not (self.is_before_day_start(time) or self.is_after_day_end(time))
 
-
-    def _check_idle(self, schedule):
-
-        # only check within working hours
-        rostime_now = rospy.get_rostime()
-        now = datetime.fromtimestamp(rostime_now.to_sec(), tzlocal()).time()
-
-        # if the task to get the robot on to the charge station fails is some way it could 
-        # get strandard. The battery recovery will kick in later, but we need to keep trying 
-        # in order to get the night tasks launched, which are only sent when charging
+    def _save_schedule(self, schedule):
+        with self._schedule_lock:
+            self.schedule = schedule
+            rospy.loginfo('updated schedule')
 
 
-        # on_charger = self.battery_state is not None and (self.battery_state.charging or self.battery_state.powerSupplyPresent)
 
-        # now that topological navigation supports localisation by topic, 
-        # we can assume that if our location is the charging point then
-        # we are also charging
-        on_charger = (self._current_node in self._charging_points)
-
-
-        # if it's night time, we're not doing anything and we're not on the charger
-        if not self.is_during_day(now) and not schedule.currently_executing and not on_charger:
-            self.demand_charge(rospy.Duration(10 * 60.0))
-
-        elif self.is_during_day(now) and self.battery_ok() :
-
-            if schedule.currently_executing:
-                self.idle_count = 0
+    def _check_idle(self, time_event):
+        with self._schedule_lock:
+            if self.schedule is None:
                 return
-            elif len(schedule.execution_queue) == 0:
-                self.idle_count += 1
-            else:
-                # delay until next task
-                delay_until_next = schedule.execution_queue[0].execution_time - rostime_now
-                # rospy.loginfo('delay until next: %s' % delay_until_next.to_sec())
-                
-                
-                if delay_until_next > rospy.Duration(60):
+
+            # only check within working hours
+            rostime_now = rospy.get_rostime()
+            now = datetime.fromtimestamp(rostime_now.to_sec(), tzlocal()).time()
+
+            # if the task to get the robot on to the charge station fails is some way it could 
+            # get strandard. The battery recovery will kick in later, but we need to keep trying 
+            # in order to get the night tasks launched, which are only sent when charging
+
+
+            # on_charger = self.battery_state is not None and (self.battery_state.charging or self.battery_state.powerSupplyPresent)
+
+            # now that topological navigation supports localisation by topic, 
+            # we can assume that if our location is the charging point then
+            # we are also charging
+            on_charger = (self._current_node in self._charging_points)
+
+
+            # if it's night time, we're not doing anything and we're not on the charger
+            if not self.is_during_day(now) and not self.schedule.currently_executing and not on_charger:
+                self.demand_charge(rospy.Duration(10 * 60.0))
+
+            elif self.is_during_day(now) and self.battery_ok() :
+
+                if self.schedule.currently_executing:
+                    self.idle_count = 0
+                    return
+                elif len(self.schedule.execution_queue) == 0:
                     self.idle_count += 1
                 else:
-                   self.idle_count = 0
+                    # delay until next task
+                    delay_until_next = self.schedule.execution_queue[0].execution_time - rostime_now
+                    # rospy.loginfo('delay until next: %s' % delay_until_next.to_sec())
+                    
+                    
+                    if delay_until_next > rospy.Duration(60):
+                        self.idle_count += 1
+                    else:
+                       self.idle_count = 0
 
-        else:
-            self.idle_count = 0
+            else:
+                self.idle_count = 0
 
-        # rospy.loginfo('idle count: %s' % self.idle_count)
-        # rospy.loginfo('idle threshold: %s' % self.idle_thres)
+            # rospy.loginfo('idle count: %s' % self.idle_count)
+            # rospy.loginfo('idle threshold: %s' % self.idle_thres)
 
-        if self.idle_count > self.idle_thres:
-            if not self.runner.day_off() and not self._routine_is_paused:
-                self.on_idle()
-            self.idle_count = 0
+            if self.idle_count > self.idle_thres:
+                if not self.runner.day_off() and not self._routine_is_paused:
+                    self.on_idle()
+                self.idle_count = 0
 
 
-    def _add_new_tasks_to_routine(self, req):
-        self.runner.insert_extra_tasks(req.tasks) 
+    def add_new_tasks_to_routine(self, tasks):
+        self.runner.insert_extra_tasks(tasks) 
+
+    def _add_new_tasks_to_routine_srv(self, req):
+        self.add_new_tasks_to_routine(req.tasks) 
         # can't do anything useful for return values here
         return []
 
