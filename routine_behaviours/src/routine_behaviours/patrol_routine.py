@@ -95,9 +95,11 @@ class PatrolRoutine(RobotRoutine):
             self.random_nodes = list(self.random_nodes)
 
         rospy.loginfo('Idle for too long, generating a random waypoint task')
-        self.add_tasks([self.create_patrol_task(random.choice(self.random_nodes))])
+        self.add_new_tasks_to_routine([self.create_patrol_task(random.choice(self.random_nodes))])
     
 
     def create_patrol_task(self, waypoint_name, max_duration=rospy.Duration(30)):
-        return Task(start_node_id=waypoint_name, end_node_id=waypoint_name, max_duration=max_duration)
+        now = rospy.get_rostime()            
+        end = now + rospy.Duration(2 * max_duration.to_sec())
+        return Task(start_node_id=waypoint_name, end_node_id=waypoint_name, max_duration=max_duration, start_after=now, end_before=end)
 
