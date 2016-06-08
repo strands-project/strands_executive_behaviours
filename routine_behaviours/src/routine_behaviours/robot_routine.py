@@ -208,6 +208,10 @@ class RobotRoutine(object):
 
 
         self.blacklisted_nodes = map(str.strip, config['blacklisted_nodes'].split(','))        
+
+        if len(self.blacklisted_nodes) and self.blacklisted_nodes[0] == '':
+            self.blacklisted_nodes = []
+
         rospy.loginfo("Blacklisted nodes set to: %s" % self.blacklisted_nodes)
         return config
 
