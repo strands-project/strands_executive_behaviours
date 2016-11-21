@@ -431,7 +431,7 @@ class RobotRoutine(object):
     def clear_schedule(self):
         try:
             clear_schedule_srv_name = '/task_executor/clear_schedule'
-            rospy.wait_for_service(clear_schedule_srv)
+            rospy.wait_for_service(clear_schedule_srv_name)
             clear_schedule_srv = rospy.ServiceProxy(clear_schedule_srv_name, Empty)
             clear_schedule_srv()
         except rospy.ServiceException, e:
@@ -451,7 +451,7 @@ class RobotRoutine(object):
     def demand_task(self, task):
         try:
             demand_task_srv_name = '/task_executor/demand_task'
-            rospy.wait_for_service(demand_task_srv)
+            rospy.wait_for_service(demand_task_srv_name)
             demand_task_srv = rospy.ServiceProxy(demand_task_srv_name, DemandTask)
             demand_task_srv(task)
         except rospy.ServiceException, e:
