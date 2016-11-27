@@ -7,7 +7,7 @@ import threading
 
 from strands_executive_msgs import task_utils
 from strands_executive_msgs.msg import Task, ExecutionStatus
-from strands_executive_msgs.srv import AddTasks, SetExecutionStatus, DemandTask
+from strands_executive_msgs.srv import AddTasks, SetExecutionStatus, DemandTask, GetIDs
 from std_srvs.srv import Empty, EmptyResponse
 from std_msgs.msg import String
 from mongodb_store.message_store import MessageStoreProxy
@@ -317,9 +317,12 @@ class RobotRoutine(object):
         self.runner.insert_extra_tasks(tasks) 
 
     def _add_new_tasks_to_routine_srv(self, req):
+        task_ids = self.new_task_ids(len(req.tasks)).task_ids
+        for idx, task in enumerate(req.tasks):
+            task.task_id = task_ids[idx]
+
         self.add_new_tasks_to_routine(req.tasks) 
-        # can't do anything useful for return values here
-        return []
+        return [task_ids]
 
     def battery_ok(self):
         """ Reports false if battery is below force_charge_threshold or if it is above it but within force_charge_addition of the threshold and charging """ 
@@ -421,20 +424,61 @@ class RobotRoutine(object):
             rospy.logwarn('Exception on scheduler service call: %s' % e)
 
 
-    def _create_services(self):
-        add_tasks_srv_name = '/task_executor/add_tasks'
-        set_exe_stat_srv_name = '/task_executor/set_execution_status'
-        demand_task_srv_name = '/task_executor/demand_task'
-        clear_schedule_srv_name = '/task_executor/clear_schedule'
-        rospy.loginfo("Waiting for task_executor service...")
-        rospy.wait_for_service(add_tasks_srv_name)
-        rospy.wait_for_service(set_exe_stat_srv_name)
-        rospy.loginfo("Done")        
-        self.add_tasks = rospy.ServiceProxy(add_tasks_srv_name, AddTasks)
-        self.set_execution_status = rospy.ServiceProxy(set_exe_stat_srv_name, SetExecutionStatus)
-        self.demand_task = rospy.ServiceProxy(demand_task_srv_name, DemandTask)
-        self.clear_schedule = rospy.ServiceProxy(clear_schedule_srv_name, Empty)
+    def _create_services(self):        
         self.maps_msg_store = MessageStoreProxy(collection='topological_maps')
+
+
+    def clear_schedule(self):
+        try:
+            clear_schedule_srv_name = '/task_executor/clear_schedule'
+            rospy.wait_for_service(clear_schedule_srv_name)
+            clear_schedule_srv = rospy.ServiceProxy(clear_schedule_srv_name, Empty)
+            clear_schedule_srv()
+        except rospy.ServiceException, e:
+            rospy.logwarn('Service threw exception: %s'% e)
+    
+
+    def new_task_ids(self, count):
+        try:
+            task_ids_srv_name = '/task_executor/get_ids'        
+            rospy.wait_for_service(task_ids_srv_name)
+            new_task_ids_srv = rospy.ServiceProxy(task_ids_srv_name, GetIDs)
+            return new_task_ids_srv(count)
+        except rospy.ServiceException, e:
+            rospy.logwarn('Service threw exception: %s'% e)
+
+
+    def demand_task(self, task):
+        try:
+            demand_task_srv_name = '/task_executor/demand_task'
+            rospy.wait_for_service(demand_task_srv_name)
+            demand_task_srv = rospy.ServiceProxy(demand_task_srv_name, DemandTask)
+            demand_task_srv(task)
+        except rospy.ServiceException, e:
+            rospy.logwarn('Service threw exception: %s'% e)
+
+
+    def add_tasks(self, tasks):
+        try:            
+            add_tasks_srv_name = '/task_executor/add_tasks'
+            rospy.wait_for_service(add_tasks_srv_name)
+            add_tasks_srv = rospy.ServiceProxy(add_tasks_srv_name, AddTasks)
+            # ensure this is always done in case of failures
+            self.set_execution_status(True)
+            return add_tasks_srv(tasks)
+        except rospy.ServiceException, e:
+            rospy.logwarn('Service threw exception: %s'% e)
+            return []
+
+
+    def set_execution_status(self, status):
+        try:                        
+            set_exe_stat_srv_name = '/task_executor/set_execution_status'
+            rospy.wait_for_service(set_exe_stat_srv_name)                    
+            set_execution_status_srv = rospy.ServiceProxy(set_exe_stat_srv_name, SetExecutionStatus)        
+            set_execution_status_srv(status)
+        except rospy.ServiceException, e:
+            rospy.logwarn('Service threw exception: %s'% e)
 
 
     def _create_charge_task(self, charge_duration):

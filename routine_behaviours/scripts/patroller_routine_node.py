@@ -13,8 +13,8 @@ if __name__ == '__main__':
 
     # start and end times -- all times should be in local timezone
     localtz = tzlocal()
-    start = time(8,30, tzinfo=localtz)
-    end = time(17,00, tzinfo=localtz)
+    start = time(8,00, tzinfo=localtz)
+    end = time(18,00, tzinfo=localtz)
 
     # how long to stand idle before doing something
     idle_duration=rospy.Duration(20)
