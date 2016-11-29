@@ -484,7 +484,8 @@ class RobotRoutine(object):
     def _create_charge_task(self, charge_duration):
         charge_task = Task(action='wait_action', max_duration=charge_duration)
         charge_task.start_node_id = ''
-        charge_task.priority = Task.HIGH_PRIORITY
+        #charge_task.priority = Task.HIGH_PRIORITY
+        charge_task.priority = 10000
 
         # allow it to charge at any of the points
         for wp in self._charging_points:
