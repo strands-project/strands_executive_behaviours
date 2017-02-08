@@ -95,6 +95,12 @@ class RobotRoutine(object):
         night_secs = (full_day_secs - end_time_secs) + start_time_secs
         self.night_duration = rospy.Duration(night_secs)
 
+         # Set the task executor running in case it's not
+        self.set_execution_status(True)
+
+        self.schedule = None
+        rospy.Subscriber('current_schedule', ExecutionStatus, self._save_schedule)
+
         # how big a gap in the scheduler should trigger a return to charger 
         self.charge_window = rospy.Duration(60 * 10)
 
@@ -110,12 +116,6 @@ class RobotRoutine(object):
         self.idle_thres = int(idle_duration.to_sec() / idle_interval_check.to_sec())
 
         self.sent_to_charge = False
-
-         # Set the task executor running in case it's not
-        self.set_execution_status(True)
-
-        self.schedule = None
-        rospy.Subscriber('current_schedule', ExecutionStatus, self._save_schedule)
 
         self._current_node = None
         rospy.Subscriber('current_node', String, self._update_topological_location)
@@ -407,7 +407,7 @@ class RobotRoutine(object):
         now = rospy.get_rostime()
     
         # hack to push scheduler to do them in the order they were added
-        delta = rospy.Duration(600)
+        # delta = rospy.Duration(600)
 
         for task in self.night_tasks:
             night_task = deepcopy(task)
@@ -415,7 +415,7 @@ class RobotRoutine(object):
             # some arbitraty time  -- 12 hours -- in the future
             night_task.end_before = now + rospy.Duration(60 * 60 * 12)
             instantiated_night_tasks.append(night_task)
-            now = now + delta
+            # now = now + delta
 
         try:
             self.add_tasks(instantiated_night_tasks)
