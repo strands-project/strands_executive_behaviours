@@ -19,7 +19,7 @@ class AutomatedRoutine(PatrolRoutine):
 
     def __init__(self, daily_start, daily_end, idle_duration=rospy.Duration(5 * 60), charging_point='ChargingPoint', pre_start_window=timedelta(hours=1)):
 
-        super(TSCRoutine, self).__init__(daily_start=daily_start, daily_end=daily_end, idle_duration=idle_duration, charging_point=charging_point, pre_start_window=pre_start_window)
+        super(AutomatedRoutine, self).__init__(daily_start=daily_start, daily_end=daily_end, idle_duration=idle_duration, charging_point=charging_point, pre_start_window=pre_start_window)
 
         if isinstance(charging_point, list):
             self.random_nodes = charging_point

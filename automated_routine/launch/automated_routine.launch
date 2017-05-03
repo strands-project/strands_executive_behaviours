@@ -1,3 +1,6 @@
 <launch>
-  <node 
+  <arg name="routine_config" default="$(find automated_routine)/conf/bham_routine.yaml"/>
+  <node pkg="automated_routine" name="automated_routine" type="automated_routine_node.py">
+    <rosparam command="load" file="$(arg routine_config)" ns="routine_config"/>
+  </node>
 </launch>
