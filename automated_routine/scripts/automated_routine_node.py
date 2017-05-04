@@ -211,7 +211,7 @@ def add_task_arg_from_dict(task, waypoint, arg_dict, task_config, global_config)
     """
     valid_types = ["string", "time", "duration", "waypoint", "arg", "global"]
     if arg_dict["type"] == "string":
-        task_utils.add_string_argument(task, arg_dict["value"])
+        task_utils.add_string_argument(task, str(arg_dict["value"]))
     elif arg_dict["type"] == "duration":
         task_utils.add_duration_argument(task, int(arg_dict["value"]))
     elif arg_dict["type"] == "time":
@@ -220,12 +220,12 @@ def add_task_arg_from_dict(task, waypoint, arg_dict, task_config, global_config)
             return False
         task_utils.add_time_argument(task, rospy.Time(int(arg_dict["value"])))
     elif arg_dict["type"] == "waypoint":
-        task_utils.add_string_argument(task, waypoint)
+        task_utils.add_string_argument(task, str(waypoint))
     elif arg_dict["type"] == "arg":
         if not "args" in task_config:
             rospy.logwarn("Task arg type arg provided, but args does not exist in the task dictionary.")
             return False
-        task_utils.add_string_argument(task, task_config["args"][arg_dict["value"]])
+        task_utils.add_string_argument(task, str(task_config["args"][arg_dict["value"]]))
     elif arg_dict["type"] == "global":
         if not "global_data" in global_config:
             rospy.logwarn("Task arg type global provided, but global_data does not exist in the task directory")
@@ -242,7 +242,7 @@ def add_task_arg_from_dict(task, waypoint, arg_dict, task_config, global_config)
                 if isinstance(value, dict):
                     cur_dict = value
                 else:
-                    task_utils.add_string_argument(task, value)
+                    task_utils.add_string_argument(task, str(value))
                     if ind < len(dict_ref_list) - 1:
                         rospy.logwarn("Got a value from the dict before processing all keys. Current key is {0}, list is {1}. There might be something wrong with your definition.".format(key, dict_ref_list))
                     break # this should be the last item in the list, but break just in case
