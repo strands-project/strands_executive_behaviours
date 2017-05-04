@@ -99,13 +99,15 @@ def get_off_date_list(off_date_conf):
     requested_dates = off_date_conf["dates"]
 
     for date_string in requested_dates:
-        dates_off.append(datetime.datetime.strptime("%Y/%m/%d", date_string).date())
+        dates_off.append(date_string)
 
     requested_ranges = off_date_conf["date_ranges"]
 
-    for range_name in requested_ranges:
-        start = datetime.datetime.strptime("%Y/%m/%d", requested_ranges[range_name]["start_date"]).date()
-        end = datetime.datetime.strptime("%Y/%m/%d", requested_ranges[range_name]["end_date"]).date()
+    for range_dict in requested_ranges:
+        range_name = range_dict.keys()[0]
+        rospy.loginfo("Processing off date range {}".format(range_name))
+        start = datetime.strptime(range_dict[range_name]["start_date"], "%Y/%m/%d").date()
+        end = datetime.strptime(range_dict[range_name]["end_date"], "%Y/%m/%d").date()
 
         # swap if dates have been set the wrong way round
         if end < start:
