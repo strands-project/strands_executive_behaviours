@@ -24,9 +24,7 @@ days_off:
 # should be specified according to ISO standard 8601
 # (http://www.iso.org/iso/iso8601), YYYY/MM/DD
 dates_off:
-  # In dates within the given ranges, the robot will be idle. The range is
-  # inclusive, i.e. a range from 2016/01/01 to 2016/01/04 will include both the
-  # 1st and 4th of January.
+  # In dates within the given ranges, the robot will be idle
   date_ranges:
     - christmas:
         start_date: "2016/12/23"
@@ -104,17 +102,17 @@ task_definitions:
     # happen multiple times in a day, by adding multiple items to the list, or
     # you can use the repeat_delta to do the same set of tasks periodically
     routine_times:
-      - start_time:
-          hours: 9
-          minutes: 30
-        end_time:
-          hours: 17
-          minutes: 0
-        # This dict should only contain keys corresponding to the arguments to
-        # the datetime.timedelta constructor
-        # (https://docs.python.org/2/library/datetime.html#timedelta-objects)
-        repeat_delta:
-          hours: 2
+      start_time:
+        hours: 9
+        minutes: 30
+      end_time:
+        hours: 17
+        minutes: 0
+      # This dict should only contain keys corresponding to the arguments to
+      # the datetime.timedelta constructor
+      # (https://docs.python.org/2/library/datetime.html#timedelta-objects)
+      repeat_delta:
+        hours: 2
     # corresponding action on the action server
     action: "search_object"
     # duration of the task
@@ -180,14 +178,14 @@ task_definitions:
     active: "false"
     waypoints: "sweep"
     routine_times:
-      - start_time:
-          hours: 10
-          minutes: 30
-        end_time:
-          hours: 17
-          minutes: 0
-        repeat_delta:
-          hours: 4
+      start_time:
+        hours: 10
+        minutes: 30
+      end_time:
+        hours: 17
+        minutes: 0
+      repeat_delta:
+        hours: 4
     action: "do_sweep"
     duration: 240
     additional_args:
@@ -196,14 +194,14 @@ task_definitions:
   #   active: "false"
   #   waypoints: "object"
   #   routine_times:
-  #     - start_time:
-  #         hours: 10
-  #         minutes: 30
-  #       end_time:
-  #         hours: 17
-  #         minutes: 0
-  #       repeat_delta:
-  #         hours: 4
+  #     start_time:
+  #       hours: 10
+  #       minutes: 30
+  #     end_time:
+  #       hours: 17
+  #       minutes: 0
+  #     repeat_delta:
+  #       hours: 4
   #   action: "learn_object"
   #   duration: 1200
   #   additional_args:
@@ -212,14 +210,14 @@ task_definitions:
     active: "false"
     waypoints: "object"
     routine_times:
-      - start_time:
-          hours: 9
-          minutes: 30
-        end_time:
-          hours: 17
-          minutes: 0
-        repeat_delta:
-          hours: 2
+      start_time:
+        hours: 9
+        minutes: 30
+      end_time:
+        hours: 17
+        minutes: 0
+      repeat_delta:
+        hours: 2
     action: "search_object"
     duration: 600
     additional_args:
@@ -231,14 +229,14 @@ task_definitions:
     active: "false"
     waypoints: "greeter"
     routine_times:
-      - start_time:
-          hours: 9
-          minutes: 30
-        end_time:
-          hours: 17
-          minutes: 0
-        repeat_delta:
-          hours: 4
+      start_time:
+        hours: 9
+        minutes: 30
+      end_time:
+        hours: 17
+        minutes: 0
+      repeat_delta:
+        hours: 4
     action: "search_object"
     duration: 480
     additional_args:
