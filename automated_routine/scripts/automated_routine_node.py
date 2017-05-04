@@ -139,10 +139,10 @@ def get_task_priority(task_config):
             if priority in priorities.keys():
                 priority = priorities[priority]
             else:
-                rospy.logwarn("Unknown priority string {0}. Setting to normal priority".format(priority))
-                priority = Task.NORMAL_PRIORITY
+                rospy.logwarn("Unknown priority string {0}. Setting to medium priority".format(priority))
+                priority = Task.MEDIUM_PRIORITY
     else:
-        priority = Task.NORMAL_PRIORITY
+        priority = Task.MEDIUM_PRIORITY
 
     return priority
 
