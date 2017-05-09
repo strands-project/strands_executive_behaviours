@@ -296,14 +296,14 @@ def tasks_from_config(task_config, global_config):
         # order as they are in the message that should be sent to start the
         # task. This is something the user has to make sure is correct in
         # the config file.
-        if "task_args" in task_config:
-            for task_arg_dict in task_config["task_args"]:
-                if not arg_dict_is_valid(task_arg_dict):
-                    rospy.logwarn("task_args definition should be a dict containing keys: type, value. Actual value: {0}".task_arg_dict)
+        if "additional_args" in task_config:
+            for additional_arg_dict in task_config["additional_args"]:
+                if not arg_dict_is_valid(additional_arg_dict):
+                    rospy.logwarn("additional_args definition should be a dict containing keys: type, value. Actual value: {0}".additional_arg_dict)
                     return []
 
                 # if the adding the arg fails, do not add the task
-                if not add_task_arg_from_dict(task, waypoint, task_arg_dict, task_config, global_config):
+                if not add_task_arg_from_dict(task, waypoint, additional_arg_dict, task_config, global_config):
                     return []
 
         tasks.append(task)
@@ -340,12 +340,14 @@ if __name__ == '__main__':
     ##############################################################################
     # Off days
     ##############################################################################
-    for day_off in config["days_off"]:
-        routine.runner.add_day_off(day_off)
+    if "days off" in config:
+        for day_off in config["days_off"]:
+            routine.runner.add_day_off(day_off)
 
-    for date_off in get_off_date_list(config["dates_off"]):
-        routine.runner.add_date_off(date_off)
-
+    if "dates off" in config:
+        for date_off in get_off_date_list(config["dates_off"]):
+            routine.runner.add_date_off(date_off)
+    
     # Here, we create all the sets of tasks that will be added to the routine.
     for task_name in config["task_definitions"]:
         rospy.loginfo("Creating task set {0}".format(task_name))
