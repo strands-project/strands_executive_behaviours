@@ -1,0 +1,245 @@
+# Time at which the daily routine should start
+start_time:
+  hours: 8
+  minutes: 30
+# Time at which no more tasks should be performed. Once the robot is charging,
+# the night tasks will be performed
+end_time:
+  hours: 17
+  minutes: 30
+# Points on the topological map at which the robot can charge. This should be a list.
+charging_points:
+  - "ChargingPoint1"
+# Seconds with the robot not performing any task before we should consider it as
+# idle, and activate the idle behaviour
+idle_duration: 240
+# Time window given to a task before it is started (?)
+pre_start_window: 360
+# Specify regular days off, when the robot will do nothing. This should be a
+# list of days of the week.
+days_off:
+  - "Saturday"
+  - "Sunday"
+# Specify dates or date ranges in which the robot should do nothing. All dates
+# should be specified according to ISO standard 8601
+# (http://www.iso.org/iso/iso8601), YYYY/MM/DD
+dates_off:
+  # In dates within the given ranges, the robot will be idle
+  date_ranges:
+    - christmas:
+        start_date: "2016/12/23"
+        end_date: "2017/01/03"
+  # On these dates, the robot will be idle
+  dates:
+    - "2017/04/14"
+# Lists of waypoints which can be used when defining where tasks should be performed
+waypoint_lists:
+  greeter:
+    - "Station"
+    - "WayPoint25"
+  sweep:
+    - "WayPoint17"
+    - "WayPoint18"
+    - "WayPoint19"
+    - "WayPoint20"
+    - "WayPoint21"
+  object: "sweep" # referring to another waypoint list allows you to use the same list with different names
+
+# Thresholds which should be used to force the robot to charge at different
+# times during the day. When the battery level (voltage) enters the threshold
+# range, it must charge to 1 volt above the threshold to resume operation. There
+# should be enough charge remaining when the threshold is reached to allow the
+# robot to return to the charging station
+battery_levels:
+  - start_time:
+      hours: 8
+      minutes: 0
+    soft: 25.5
+    hard: 25.5
+  - start_time:
+      hours: 13
+      minutes: 0
+    soft: 25
+    hard: 25
+# Defines data which can be used by all task definitions
+global_data:
+  object_search_dfns:
+    WayPoint17: {robot: 11, surface: 1}
+    WayPoint18: {robot: 12, surface: 2}
+    WayPoint19: {robot: 13, surface: 3}
+    WayPoint20: {robot: 14, surface: 4}
+    WayPoint21: {robot: 15, surface: 5}
+  object_search_dfns_quasimodo:
+    WayPoint17: {robot: 11, surface: 1}
+    WayPoint18: {robot: 12, surface: 2}
+    WayPoint19: {robot: 13, surface: 3}
+    WayPoint20: {robot: 14, surface: 4}
+    WayPoint21: {robot: 15, surface: 5}
+task_definitions:
+  object_search:
+    # Defines whether this task should be used or not. A string which is equal
+    # to "true" when all letters are lowercase will result in the task being
+    # added to the routine. Anything else and the task will be ignored.
+    active: "true"
+    # corresponds to a list in waypoint_lists, or a single specific waypoint.
+    waypoints: "object"
+    # Use this to define the end waypoints for each task created. If not
+    # present, then only the start waypoint will be defined. This can be a
+    # reference to one of the waypoint lists, a single waypoint, or a new list.
+    # if You create a list, it should contain the same number of waypoints in
+    # the waypoints list provided. If you don't want to give a corresponding end
+    # waypoint for a specific waypoint, then you should use the string "none".
+    # end_waypoints: "sweep" # reference
+    # end_waypoints: "test_waypoint" # single waypoint
+    # end_waypoints: # list of waypoints
+    #   - "none"
+    #   - "none"
+    #   - "another_waypoint"
+    #   - "some_other"
+    #   - "another"
+
+    # Here, we define when the tasks are actually sent to the routine. This can
+    # happen multiple times in a day, by adding multiple items to the list, or
+    # you can use the repeat_delta to do the same set of tasks periodically
+    routine_times:
+      start_time:
+        hours: 9
+        minutes: 30
+      end_time:
+        hours: 17
+        minutes: 0
+      # This dict should only contain keys corresponding to the arguments to
+      # the datetime.timedelta constructor
+      # (https://docs.python.org/2/library/datetime.html#timedelta-objects)
+      repeat_delta:
+        hours: 2
+    # corresponding action on the action server
+    action: "search_object"
+    # duration of the task
+    duration: 600
+    # Priority can be specified with a number (between 0 and 10000), or using
+    # the strings low, medium and high, which use presets in the system.
+    # priority: 1000
+    
+    # You can store arguments specific to the task that you want to reuse here.
+    # This may be useful if you need to add the same argument to the task
+    # multiple times. See below for usage
+    args:
+      search_type: "object_mini"
+    # Additional arguments to be provided when creating the task. The arguments
+    # correspond to the fields in the action request that will be sent to the
+    # action server.
+    # !! The values given here should be in the same order as the fields in the message !!
+    # e.g. with a message
+    # string name
+    # duration duration
+    # 
+    # You should ensure that the first dict in the list is the value you want
+    # for the name, then the value you want for the duration.
+    task_args:
+      # Each value in the list is a dict. Type is the type of the argument you
+      # want to add to the task, one of [string, duration, time, waypoint, arg,
+      # global], and value is the value that the argument should have. The time
+      # argument can be given an integer, and will use that to define the time.
+      #
+      # The waypoint type specifies that the waypoint at which the task should
+      # start should also be added as a string argument. If using the waypoint
+      # type, the dictionary should be {type: "waypoint"}, with no value
+      # 
+      # The arg type specifies that the value of a key defined in the top-level
+      # "args" dict for this task (i.e. the same level in the yaml as the
+      # waypoints) should be passed as a string argument.
+      #
+      # e.g. {type: "arg", value: "testval"}
+      #
+      # The args dict would then look something like {testval: "my_value"} 
+      # 
+      # The global type specifies that something in the top level dict
+      # "global_args" should be accessed. Since this dict may be nested, the
+      # value you give should indicate the chain of dictionary accesses that
+      # should be done to get the value you want.
+      #
+      # e.g. {type: "global", value: "a:b:c:d"}
+      #
+      # will access global_data[a][b][c][d]
+      #
+      # You can use the string $waypoint$ to refer to the name of the waypoint
+      # that the task is to be executed at.
+      #
+      # e.g. {type: "global", value: "a:$waypoint$:b"}
+      #
+      # will access global_data[a][waypoint][b]
+      - {type: "waypoint"}
+      - {type: "global", value: "object_search_dfns:$waypoint$:robot"}
+      - {type: "global", value: "object_search_dfns:$waypoint$:surface"}
+      - {type: "arg", value: "search_type"} # use this to refer to args in the dict
+      # - {type: "string", value: "object_mini"} # or just use this for simplicity
+  sweep:
+    active: "false"
+    waypoints: "sweep"
+    routine_times:
+      start_time:
+        hours: 10
+        minutes: 30
+      end_time:
+        hours: 17
+        minutes: 0
+      repeat_delta:
+        hours: 4
+    action: "do_sweep"
+    duration: 240
+    additional_args:
+      - {type: "string", value: "medium"}
+  # learn_object:
+  #   active: "false"
+  #   waypoints: "object"
+  #   routine_times:
+  #     start_time:
+  #       hours: 10
+  #       minutes: 30
+  #     end_time:
+  #       hours: 17
+  #       minutes: 0
+  #     repeat_delta:
+  #       hours: 4
+  #   action: "learn_object"
+  #   duration: 1200
+  #   additional_args:
+  #     - {type: "waypoint"}
+  object_search_quasimodo:
+    active: "false"
+    waypoints: "object"
+    routine_times:
+      start_time:
+        hours: 9
+        minutes: 30
+      end_time:
+        hours: 17
+        minutes: 0
+      repeat_delta:
+        hours: 2
+    action: "search_object"
+    duration: 600
+    additional_args:
+      - {type: "waypoint"}
+      - {type: "global", value: "object_search_dfns_quasimodo:$waypoint$:robot"}
+      - {type: "global", value: "object_search_dfns_quasimodo:$waypoint$:surface"}
+      - {type: "string", value: "object_full"}
+  greeter:
+    active: "false"
+    waypoints: "greeter"
+    routine_times:
+      start_time:
+        hours: 9
+        minutes: 30
+      end_time:
+        hours: 17
+        minutes: 0
+      repeat_delta:
+        hours: 4
+    action: "search_object"
+    duration: 480
+    additional_args:
+      - {type: "global", value: "person_search_dfns:$waypoint:robot"}
+      - {type: "global", value: "person_search_dfns:$waypoint:surface"}
+      - {type: "string", value: "human"}
