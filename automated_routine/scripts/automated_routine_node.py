@@ -21,11 +21,6 @@ class AutomatedRoutine(PatrolRoutine):
 
         super(AutomatedRoutine, self).__init__(daily_start=daily_start, daily_end=daily_end, idle_duration=idle_duration, charging_point=charging_point, pre_start_window=pre_start_window)
 
-        if isinstance(charging_point, list):
-            self.random_nodes = charging_point
-        else:
-            self.random_nodes = [charging_point]
-
     def start_routine(self):
         self.runner.add_tasks(self.routine.get_routine_tasks())
 
@@ -347,7 +342,7 @@ if __name__ == '__main__':
     if "dates off" in config:
         for date_off in get_off_date_list(config["dates_off"]):
             routine.runner.add_date_off(date_off)
-    
+
     # Here, we create all the sets of tasks that will be added to the routine.
     for task_name in config["task_definitions"]:
         rospy.loginfo("Creating task set {0}".format(task_name))
@@ -358,12 +353,21 @@ if __name__ == '__main__':
 
         routine_times = config["task_definitions"][task_name]["routine_times"]
         delta = None if "repeat_delta" not in routine_times else timedelta(**routine_times["repeat_delta"])
-        routine.create_task_routine(tasks_from_config(config["task_definitions"][task_name], config),
-                                    daily_start = time(routine_times["start_time"]["hours"],
-                                                       routine_times["start_time"]["minutes"], tzinfo=localtz),
-                                    daily_end = time(routine_times["end_time"]["hours"],
-                                                     routine_times["end_time"]["minutes"], tzinfo=localtz),
-                                    repeat_delta = delta)
+        task_type = "custom"
+        if "type" in config["task_definitions"][task_name]:
+            task_type = config["task_definitions"][task_name]["type"]
+
+        task_start = time(routine_times["start_time"]["hours"], routine_times["start_time"]["minutes"], tzinfo=localtz)
+        task_end = time(routine_times["end_time"]["hours"], routine_times["end_time"]["minutes"], tzinfo=localtz)
+            
+        if task_type == "patrol":
+            waypoints, _ = get_start_end_waypoints(config["task_definitions"][task_name], config)
+            routine.create_patrol_routine(waypoints, task_start, task_end, delta)
+        else:
+            routine.create_task_routine(tasks_from_config(config["task_definitions"][task_name], config),
+                                        daily_start = task_start,
+                                        daily_end = task_end,
+                                        repeat_delta = delta)
 
     routine.start_routine()
 
