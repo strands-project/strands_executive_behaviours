@@ -22,7 +22,7 @@ import random
 class PatrolRoutine(RobotRoutine):
     """ Creates a routine which simply visits nodes. """
 
-    def __init__(self, daily_start, daily_end, idle_duration=rospy.Duration(5), charging_point = 'ChargingPoint', pre_start_window=timedelta(hours=1)):
+    def __init__(self, daily_start, daily_end, idle_duration=rospy.Duration(5), charging_point = ['ChargingPoint'], pre_start_window=timedelta(hours=1)):
         # super(PatrolRoutine, self).__init__(daily_start, daily_end)        
         RobotRoutine.__init__(self, daily_start, daily_end, idle_duration=idle_duration, charging_point=charging_point, pre_start_window=pre_start_window)
         self.node_names = set()        
@@ -33,7 +33,7 @@ class PatrolRoutine(RobotRoutine):
     def map_callback(self, msg):        
         # print 'got map: %s' % len(msg.nodes)
         self.topological_map = msg
-        self.node_names = set([node.name for node in msg.nodes if node.name != 'ChargingPoint'])
+        self.node_names = set([node.name for node in msg.nodes if not node.name.startswith('ChargingPoint')])
         if len(self.random_nodes) == 0:
             self.random_nodes = list(self.node_names)
 
@@ -66,11 +66,13 @@ class PatrolRoutine(RobotRoutine):
         return max_time
 
     def create_patrol_routine(self, waypoints=None, daily_start=None, daily_end=None, repeat_delta=None):
+        """
+        repeat_delta: how often to repeat the patrol
+        """
         if not waypoints: 
             waypoints = self.get_nodes()
 
         if not repeat_delta:
-            # ignoring this now            
             single_node_estimate = self.max_single_trip_time(waypoints).to_sec()
             tour_duration_estimate = single_node_estimate * (len(waypoints)-1) * 2
             repeat_delta = timedelta(seconds=tour_duration_estimate)

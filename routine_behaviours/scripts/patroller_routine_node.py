@@ -11,15 +11,22 @@ from routine_behaviours.patrol_routine import PatrolRoutine
 if __name__ == '__main__':
     rospy.init_node("patroller_routine")
 
+    if rospy.get_param('use_sim_time'):
+        from rosgraph_msgs.msg import Clock 
+        rospy.loginfo('Using sim time, waiting for time update')
+        rospy.wait_for_message('clock', Clock)
+
+
+
     # start and end times -- all times should be in local timezone
     localtz = tzlocal()
-    start = time(8,00, tzinfo=localtz)
-    end = time(18,00, tzinfo=localtz)
+    start = time(0,01, tzinfo=localtz)
+    end = time(23,59, tzinfo=localtz)
 
     # how long to stand idle before doing something
     idle_duration=rospy.Duration(20)
 
-    routine = PatrolRoutine(daily_start=start, daily_end=end, idle_duration=idle_duration)    
+    routine = PatrolRoutine(charging_point = ['ChargingPoint1', 'ChargingPoint2'], daily_start=start, daily_end=end, idle_duration=idle_duration)    
      
     # create a routine to patrol all points in the environment
     # 
