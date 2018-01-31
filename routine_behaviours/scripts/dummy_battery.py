@@ -19,7 +19,7 @@ class DummyBattery(object):
 
         # battery percent per second
         self._discharge_rate = float(rospy.get_param('~discharge_rate', 0.03)) / self._rate
-        self._recharge_rate = float(rospy.get_param('~recharge_rate', 1.0)) / self._rate
+        self._recharge_rate = float(rospy.get_param('~recharge_rate', 0.30)) / self._rate
 
         # battery charge between 1 and 100
         self._current_level = 100
@@ -42,8 +42,10 @@ class DummyBattery(object):
             msg.present = self._current_node in self._charging_points
 
             if msg.present: 
+                msg.power_supply_status = BatteryState.POWER_SUPPLY_STATUS_CHARGING
                 self._current_level = min(100, self._current_level + self._recharge_rate)
             else:
+                msg.power_supply_status = BatteryState.POWER_SUPPLY_STATUS_DISCHARGING
                 self._current_level = max(0, self._current_level - self._discharge_rate)
 
             msg.percentage = float(self._current_level)
