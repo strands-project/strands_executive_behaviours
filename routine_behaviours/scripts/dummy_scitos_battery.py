@@ -3,7 +3,8 @@
 import rospy
 
 from scitos_msgs.msg import BatteryState
-from std_msgs.msg import String
+from geometry_msgs.msg import Pose
+from strands_navigation_msgs.msg import TopologicalMap
 
 class DummyBattery(object):
     """
@@ -11,22 +12,36 @@ class DummyBattery(object):
     """
     def __init__(self):
         super(DummyBattery, self).__init__()
-        self._charging_points = rospy.get_param('~charging_points', ['ChargingPoint'])
-        self._current_node = None
-        # run at 10hz which matches the scitos
+        self._charging_points = rospy.get_param('~charging_points', ['ChargingPoint', 'ChargingPoint1', 'ChargingPoint2' ])
+        self._charging_poses = []
+        self._pose_tolerance = 0.4
+        self._at_charging_point = False
+        
+        # run at 10hz which matches the scitos robot
         self._rate = 10
+        
         # battery percent per second
         self._discharge_rate = float(rospy.get_param('~discharge_rate', 0.03)) / self._rate
         self._recharge_rate = float(rospy.get_param('~recharge_rate', 1.0)) / self._rate
         self._current_level = 100
 
-        rospy.Subscriber('/current_node', String, self._update_topological_location)
+        self._get_charging_points_poses()
+        self._pose_sub = rospy.Subscriber('robot_pose', Pose, self._pose_cb)
         self._battery_pub = rospy.Publisher('/battery_state', BatteryState, queue_size = 1)
 
+    def _get_charging_points_poses(self):
+        topo_map = rospy.wait_for_message("topological_map", TopologicalMap).nodes
+        for entry in topo_map:
+            if entry.name in self._charging_points:
+                self._charging_poses.append(entry.pose)
+       
 
-
-    def _update_topological_location(self, node_name):
-        self._current_node = node_name.data
+    def _pose_cb(self, msg):
+        for pose in self._charging_poses:
+            if abs(msg.position.x - pose.position.x) < self._pose_tolerance and abs(msg.position.y - pose.position.y) < self._pose_tolerance:
+                self._at_charging_point = True
+                return
+        self._at_charging_point = False
 
     def run(self):
         rate = rospy.Rate(self._rate)
@@ -34,7 +49,7 @@ class DummyBattery(object):
         msg = BatteryState()
         while not rospy.is_shutdown():
             msg.header.stamp = rospy.get_rostime()
-            msg.charging = self._current_node in self._charging_points
+            msg.charging = self._at_charging_point
 
             if msg.charging: 
                 self._current_level = min(100, self._current_level + self._recharge_rate)
