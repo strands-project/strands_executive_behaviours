@@ -61,7 +61,7 @@ class RobotRoutine(object):
 
 
         self.battery_count = 0
-        # home many ~10Hz updates to wait for between forced charge counts
+        # home many ~10Hz updates to wait for between forced charge counts               
         self.battery_count_thres = 10 * 60 * 5
         self.battery_state = None
 
@@ -338,8 +338,8 @@ class RobotRoutine(object):
             # else if we're charging we should allow some amount of charging to happen
             # before everything is ok again
             elif self._is_charging():            
-                threshold = min(self.soft_threshold + self.addition, 98)                
-                return self.battery_state.percentage > threshold
+                charged_threshold = min(self.soft_threshold + self.addition, 98)                
+                return self.battery_state.percentage > charged_threshold
             else:
                 return True
 
@@ -368,9 +368,9 @@ class RobotRoutine(object):
 
         self._update_battery_threshold()
 
-        if self.battery_threshold_state_change < 0:
-            rospy.logwarn('Passed into a lower battery threshold, clearing execution schedule')
-            self.clear_execution_schedule()
+        # if we've just changed under the hard threshold make sure we re-check what to do
+        if self.battery_threshold_state_change < 0 and self.battery_threshold_state == UNDER_HARD_THRESHOLD:
+            self.battery_count = 0
 
         if not self.battery_ok():
             
@@ -381,7 +381,7 @@ class RobotRoutine(object):
                     rospy.logwarn('Battery below soft charge threshold: %s ' % (self.battery_state.percentage)) 
                     self.add_charge(self.force_charge_duration)
                     # bit of a hack to delay the update for this to happen again
-                    self.battery_count = -(self.battery_count_thres * 2) 
+                    self.battery_count = -(self.battery_count_thres) 
 
                 else:
                     rospy.logwarn('Battery below force charge threshold: %s ' % (self.battery_state.percentage))
