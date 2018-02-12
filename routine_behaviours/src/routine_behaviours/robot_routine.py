@@ -9,7 +9,7 @@ from strands_executive_msgs import task_utils
 from strands_executive_msgs.msg import Task, ExecutionStatus
 from strands_executive_msgs.srv import AddTasks, SetExecutionStatus, DemandTask, GetIDs
 from std_srvs.srv import Empty, EmptyResponse
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from mongodb_store.message_store import MessageStoreProxy
 
 from sensor_msgs.msg import BatteryState
@@ -55,6 +55,9 @@ class RobotRoutine(object):
         self._create_services()
                 
         self._routine_is_paused = False
+        self._paused_publisher = rospy.Publisher('robot_routine/routine_is_paused', Bool, latch=True)
+        self._publish_pause_state()
+
 
         rospy.loginfo('Fetching parameters from dynamic_reconfigure')
         Server(RoutineParametersConfig, self.dynamic_reconfigure_cb)
@@ -133,15 +136,23 @@ class RobotRoutine(object):
     def new_routine_runner(self):
         return task_routine.DailyRoutineRunner(self.daily_start, self.daily_end, self.add_tasks, day_start_cb=self.on_day_start, day_end_cb=self.on_day_end, tasks_allowed_fn=self.task_allowed_now, daily_tasks_fn=self.extra_tasks_for_today, pre_start_window=self.pre_start_window)
 
+    def _publish_pause_state(self):
+        try:
+            self._paused_publisher.publish(self._routine_is_paused)
+        except Exception as e:
+            rospy.logwarn('Caught exception in _publish_pause_state: %s' % e)                
+
 
     def _pause_routine(self, req):
         rospy.loginfo('Pausing routine')
         self._routine_is_paused = True
+        self._publish_pause_state()
         return EmptyResponse()
 
     def _unpause_routine(self, req):
         rospy.loginfo('Unpausing routine')
         self._routine_is_paused = False
+        self._publish_pause_state()
         return EmptyResponse()
 
     def _update_topological_location(self, node_name):
