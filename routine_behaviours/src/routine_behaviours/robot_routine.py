@@ -74,7 +74,7 @@ class RobotRoutine(object):
         self.sent_night_tasks = False
         self.night_tasks = []
 
-        rospy.Subscriber('/battery_state', BatteryState, self._check_battery)
+        rospy.Subscriber('battery_state', BatteryState, self._check_battery)
         # lazy/silly sleep to check battery received if present
         rospy.sleep(0.5)
 
@@ -433,7 +433,7 @@ class RobotRoutine(object):
 
     def clear_schedule(self):
         try:
-            clear_schedule_srv_name = '/task_executor/clear_schedule'
+            clear_schedule_srv_name = 'task_executor/clear_schedule'
             rospy.wait_for_service(clear_schedule_srv_name)
             clear_schedule_srv = rospy.ServiceProxy(clear_schedule_srv_name, Empty)
             clear_schedule_srv()
@@ -443,7 +443,7 @@ class RobotRoutine(object):
 
     def new_task_ids(self, count):
         try:
-            task_ids_srv_name = '/task_executor/get_ids'        
+            task_ids_srv_name = 'task_executor/get_ids'        
             rospy.wait_for_service(task_ids_srv_name)
             new_task_ids_srv = rospy.ServiceProxy(task_ids_srv_name, GetIDs)
             return new_task_ids_srv(count)
@@ -453,7 +453,7 @@ class RobotRoutine(object):
 
     def demand_task(self, task):
         try:
-            demand_task_srv_name = '/task_executor/demand_task'
+            demand_task_srv_name = 'task_executor/demand_task'
             rospy.wait_for_service(demand_task_srv_name)
             demand_task_srv = rospy.ServiceProxy(demand_task_srv_name, DemandTask)
             demand_task_srv(task)
@@ -463,7 +463,7 @@ class RobotRoutine(object):
 
     def add_tasks(self, tasks):
         try:            
-            add_tasks_srv_name = '/task_executor/add_tasks'
+            add_tasks_srv_name = 'task_executor/add_tasks'
             rospy.wait_for_service(add_tasks_srv_name)
             add_tasks_srv = rospy.ServiceProxy(add_tasks_srv_name, AddTasks)
             # ensure this is always done in case of failures
@@ -476,7 +476,7 @@ class RobotRoutine(object):
 
     def set_execution_status(self, status):
         try:                        
-            set_exe_stat_srv_name = '/task_executor/set_execution_status'
+            set_exe_stat_srv_name = 'task_executor/set_execution_status'
             rospy.wait_for_service(set_exe_stat_srv_name)                    
             set_execution_status_srv = rospy.ServiceProxy(set_exe_stat_srv_name, SetExecutionStatus)        
             set_execution_status_srv(status)

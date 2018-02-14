@@ -14,7 +14,7 @@ if __name__ == '__main__':
     if rospy.get_param('use_sim_time'):
         from rosgraph_msgs.msg import Clock 
         rospy.loginfo('Using sim time, waiting for time update')
-        rospy.wait_for_message('clock', Clock)
+        rospy.wait_for_message('/clock', Clock)
 
 
 

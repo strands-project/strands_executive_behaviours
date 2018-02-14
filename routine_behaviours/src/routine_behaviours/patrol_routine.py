@@ -27,7 +27,7 @@ class PatrolRoutine(RobotRoutine):
         RobotRoutine.__init__(self, daily_start, daily_end, idle_duration=idle_duration, charging_point=charging_point, pre_start_window=pre_start_window)
         self.node_names = set()        
         self.topological_map = None
-        rospy.Subscriber('topological_map', TopologicalMap, self.map_callback)
+        rospy.Subscriber('/topological_map', TopologicalMap, self.map_callback)
         self.random_nodes = []
 
     def map_callback(self, msg):        
@@ -53,7 +53,7 @@ class PatrolRoutine(RobotRoutine):
 
     def max_single_trip_time(self, waypoints):
 
-        expected_time = rospy.ServiceProxy('topological_navigation/travel_time_estimator', EstimateTravelTime)        
+        expected_time = rospy.ServiceProxy('/topological_navigation/travel_time_estimator', EstimateTravelTime)        
 
         max_time = rospy.Duration(0)
         for start in waypoints:

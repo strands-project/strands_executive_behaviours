@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import rospy
 
 from scitos_msgs.msg import BatteryState
@@ -20,6 +19,7 @@ class DummyBattery(object):
         # run at 10hz which matches the scitos robot
         self._rate = 10
         
+        
         # battery percent per second
         self._discharge_rate = float(rospy.get_param('~discharge_rate', 0.03)) / self._rate
         self._recharge_rate = float(rospy.get_param('~recharge_rate', 1.0)) / self._rate
@@ -27,7 +27,7 @@ class DummyBattery(object):
 
         self._get_charging_points_poses()
         self._pose_sub = rospy.Subscriber('robot_pose', Pose, self._pose_cb)
-        self._battery_pub = rospy.Publisher('/battery_state', BatteryState, queue_size = 1)
+        self._battery_pub = rospy.Publisher('battery_state', BatteryState, queue_size = 1)
 
     def _get_charging_points_poses(self):
         topo_map = rospy.wait_for_message("topological_map", TopologicalMap).nodes
