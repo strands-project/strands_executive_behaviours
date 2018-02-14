@@ -126,9 +126,14 @@ class RobotRoutine(object):
         # allow other clients to queue up tasks for 
         rospy.Service('robot_routine/add_tasks', AddTasks, self._add_new_tasks_to_routine_srv)
 
-        # allow 
+        # remote control of routine
+
+        # pause and unpause prevent tasks being sent to executor
         rospy.Service('robot_routine/pause_routine', Empty, self._pause_routine)
         rospy.Service('robot_routine/unpause_routine', Empty, self._unpause_routine)
+        # clear the current tasks, head to the dock and pause the routine... effectively turn off behaviour
+        rospy.Service('robot_routine/clear_charge_pause', Empty, self._clear_charge_pause)
+
 
     def new_routine(self):
         return task_routine.DailyRoutine(self.daily_start, self.daily_end)
@@ -144,16 +149,26 @@ class RobotRoutine(object):
 
 
     def _pause_routine(self, req):
-        rospy.loginfo('Pausing routine')
-        self._routine_is_paused = True
-        self._publish_pause_state()
-        return EmptyResponse()
+        with self._schedule_lock:
+            rospy.loginfo('Pausing routine')
+            self._routine_is_paused = True
+            self._publish_pause_state()
+            return EmptyResponse()
 
     def _unpause_routine(self, req):
-        rospy.loginfo('Unpausing routine')
-        self._routine_is_paused = False
-        self._publish_pause_state()
-        return EmptyResponse()
+        with self._schedule_lock:
+            rospy.loginfo('Unpausing routine')
+            self._routine_is_paused = False
+            self._publish_pause_state()
+            return EmptyResponse()
+
+    def _clear_charge_pause(self, req):
+        rospy.loginfo('_clear_charge_pause routine')
+        self._pause_routine(req)
+        with self._schedule_lock:
+            self.clear_then_charge(rospy.Duration(60))
+            return EmptyResponse()
+
 
     def _update_topological_location(self, node_name):
         self._current_node = node_name.data
@@ -551,7 +566,7 @@ class RobotRoutine(object):
         self.clear_execution_schedule()
 
         # safety sleep, but could be issues here
-        rospy.sleep(10)
+        rospy.sleep(2)
         self.demand_charge(charge_duration)
 
     def on_day_end(self):
