@@ -32,7 +32,7 @@ class DummyBattery(object):
         self._battery_pub = rospy.Publisher('battery_state', BatteryState, queue_size = 1)
 
     def _get_charging_points_poses(self):
-        topo_map = rospy.wait_for_message("topological_map", TopologicalMap).nodes
+        topo_map = rospy.wait_for_message("/topological_map", TopologicalMap).nodes
         for entry in topo_map:
             if entry.name in self._charging_points:
                 self._charging_poses.append(entry.pose)
