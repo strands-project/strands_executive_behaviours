@@ -11,7 +11,7 @@ from routine_behaviours.patrol_routine import PatrolRoutine
 if __name__ == '__main__':
     rospy.init_node("patroller_routine")
 
-    if rospy.get_param('use_sim_time'):
+    if rospy.get_param('use_sim_time', False):
         from rosgraph_msgs.msg import Clock 
         rospy.loginfo('Using sim time, waiting for time update')
         rospy.wait_for_message('/clock', Clock)
