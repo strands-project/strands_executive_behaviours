@@ -101,8 +101,7 @@ class PatrolRoutine(RobotRoutine):
     
 
     def create_patrol_task(self, waypoint_name, max_duration=rospy.Duration(30)):
-        now = rospy.get_rostime()    
-        start = now + rospy.Duration(5)        
-        end = start + rospy.Duration(2 * max_duration.to_sec())
-        return Task(start_node_id=waypoint_name, end_node_id=waypoint_name, max_duration=max_duration, start_after=start, end_before=end, priority=Task.LOW_PRIORITY)
+        now = rospy.get_rostime()            
+        end = now + rospy.Duration(2 * max_duration.to_sec())
+        return Task(start_node_id=waypoint_name, end_node_id=waypoint_name, max_duration=max_duration, start_after=now, end_before=end, priority=Task.LOW_PRIORITY)
 
